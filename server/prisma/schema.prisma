@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String
+  icon      String
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id           Int         @id @default(autoincrement())
+  name         String
+  description  String      @db.Text
+  price        Decimal     @db.Decimal(10, 2)
+  image_url    String      @db.Text
+  prep_time    Int         @default(15) // In minutes
+  is_available Boolean     @default(true)
+  categoryId   Int
+  category     Category    @relation(fields: [categoryId], references: [id])
+  OrderItems   OrderItem[]
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  table_number   Int
+  total_amount   Decimal     @db.Decimal(10, 2)
+  status         String      @default("Pending") // Pending, Preparing, Ready, Completed
+  payment_status String      @default("Unpaid") // Unpaid, Paid
+  created_at     DateTime    @default(now())
+  orderItems     OrderItem[]
+}
+
+model OrderItem {
+  id           Int      @id @default(autoincrement())
+  orderId      String
+  menuItemId   Int
+  quantity     Int
+  subtotal     Decimal  @db.Decimal(10, 2)
+  order        Order    @relation(fields: [orderId], references: [id])
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+}
