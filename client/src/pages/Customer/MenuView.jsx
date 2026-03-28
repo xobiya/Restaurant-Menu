@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import BentoCard from '../../components/common/BentoCard';
 import { Search } from 'lucide-react';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function MenuView() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,13 +13,18 @@ export default function MenuView() {
   const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
-    // ... data fetching as before ...
-    const mockData = [
-      { id: 1, name: 'Daily Specials', menuItems: [ { id: 101, name: 'Wagyu Burger Combo', price: 550, image_url: '...' } ] },
-      { id: 2, name: 'Beverages', menuItems: [ { id: 102, name: 'Iced Latte', price: 150, image_url: '...' }, { id: 103, name: 'Mango Juice', price: 120, image_url: '...' } ] }
-    ];
-    setCategories(mockData);
-    setLoading(false);
+    const fetchMenu = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/menu`);
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Failed to fetch menu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenu();
   }, []);
 
   const filteredCategories = categories.map(cat => ({
@@ -29,10 +36,16 @@ export default function MenuView() {
   })).filter(cat => cat.menuItems.length > 0);
 
   return (
-    <motion.div className="pt-6 px-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+      className="pt-6 px-4"
+    >
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Menu</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Menu</h1>
           <p className="text-textMuted mt-1 text-sm">Table {localStorage.getItem('table_number') || '1'}</p>
         </div>
         <div className="relative group">
@@ -47,7 +60,6 @@ export default function MenuView() {
         </div>
       </div>
 
-      {/* Category Filter Pills */}
       <div className="flex space-x-2 overflow-x-auto pb-4 no-scrollbar mb-4">
         <button 
           onClick={() => setActiveCategory('All')}
@@ -72,25 +84,34 @@ export default function MenuView() {
 
       {loading ? (
         <div className="bento-grid">
-           {[...Array(5)].map((_, i) => <div key={i} className="..." />)}
+           {[...Array(5)].map((_, i) => (
+             <div 
+               key={i} 
+               className={`bg-surface animate-pulse rounded-bento ${i === 0 ? 'col-span-2 row-span-2 h-[250px]' : 'col-span-1 h-[140px]'}`}
+             />
+           ))}
         </div>
       ) : (
         <div className="pb-24">
-          {filteredCategories.length > 0 ? filteredCategories.map((cat) => (
-            <div key={cat.id} className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 opacity-90">{cat.name}</h2>
-              <div className="bento-grid">
-                {cat.menuItems.map((item, index) => (
-                  <BentoCard 
-                     key={item.id} 
-                     item={item} 
-                     isLarge={cat.name === 'Daily Specials' && index === 0} 
-                  />
-                ))}
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((cat) => (
+              <div key={cat.id} className="mb-8">
+                <h2 className="text-xl font-semibold mb-4 opacity-90">{cat.name}</h2>
+                <div className="bento-grid">
+                  {cat.menuItems.map((item, index) => (
+                    <BentoCard 
+                       key={item.id} 
+                       item={item} 
+                       isLarge={cat.name === 'Daily Specials' && index === 0} 
+                    />
+                  ))}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="py-20 text-center text-textMuted">
+              No items found matching "{searchQuery}"
             </div>
-          )) : (
-            <div className="py-20 text-center text-textMuted">No items found matching "{searchQuery}"</div>
           )}
         </div>
       )}

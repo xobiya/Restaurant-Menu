@@ -5,6 +5,8 @@ import { Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { useState } from 'react';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function CartView() {
   const { cartItems, removeItem, updateQuantity, getCartTotal, getTotalItems, clearCart } = useCartStore();
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ export default function CartView() {
 
     try {
       // 1. Create order in DB first
-      const orderResponse = await axios.post('/api/orders', { 
+      const orderResponse = await axios.post(`${API_BASE_URL}/orders`, { 
         table_number: localStorage.getItem('table_number') || 1, 
         items: cartItems.map(item => ({ menuItemId: item.id, quantity: item.quantity }))
       });
@@ -26,7 +28,7 @@ export default function CartView() {
       const orderId = orderResponse.data.id;
 
       // 2. Initiate Payment (Chapa/Telebirr)
-      const paymentResponse = await axios.post('/api/payments/initiate', {
+      const paymentResponse = await axios.post(`${API_BASE_URL}/payments/initiate`, {
         orderId: orderId,
         amount: total,
         customerInfo: { name: 'Customer', email: 'customer@example.com' } // Placeholders

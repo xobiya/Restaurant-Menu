@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Check, ChefHat, AlertCircle } from 'lucide-react';
 import { io } from 'socket.io-client';
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const StatusBadge = ({ status }) => {
   const configs = {
@@ -29,37 +32,44 @@ const StatusBadge = ({ status }) => {
 
 export default function AdminOrderFeed() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Connect to socket server
-    const socket = io('http://localhost:5000'); // Use env for production
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/orders`);
+        setOrders(response.data);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Initial fetch from API (Mocked for now)
-    const mockOrders = [
-      { id: '1234', table: 5, total: 450, status: 'Pending', time: '2 mins ago' },
-      { id: '1235', table: 2, total: 120, status: 'Preparing', time: '5 mins ago' },
-      { id: '1236', table: 8, total: 890, status: 'Ready', time: '10 mins ago' },
-    ];
-    setOrders(mockOrders);
+    fetchOrders();
+
+    // Connect to socket server
+    const socket = io('http://localhost:5000');
 
     // Listen for real-time updates
     socket.on('newOrder', (newOrder) => {
       console.log('New real-time order received:', newOrder);
-      setOrders(prev => [{
-        id: newOrder.id.substring(0, 8),
-        table: newOrder.table_number,
-        status: newOrder.status,
-        total: newOrder.total_amount,
-        time: 'Just now'
-      }, ...prev]);
+      setOrders(prev => [newOrder, ...prev]);
     });
 
     return () => socket.disconnect();
   }, []);
 
-  const updateStatus = (id, newStatus) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+  const updateStatus = async (id, newStatus) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/orders/${id}/status`, { status: newStatus });
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
   };
+
+  if (loading) return <div className="p-8 text-center text-textMuted font-mono">Loading Kitchen Feed...</div>;
 
   return (
     <div className="p-4 space-y-4">
@@ -84,12 +94,12 @@ export default function AdminOrderFeed() {
           <tbody className="divide-y divide-white/5">
             {orders.map((order) => (
               <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                <td className="px-4 py-4 font-mono text-xs">#{order.id}</td>
-                <td className="px-4 py-4 font-bold">T-{order.table}</td>
+                <td className="px-4 py-4 font-mono text-xs">#{order.id.substring(0, 8)}</td>
+                <td className="px-4 py-4 font-bold">T-{order.table_number}</td>
                 <td className="px-4 py-4">
                   <StatusBadge status={order.status} />
                 </td>
-                <td className="px-4 py-4 font-semibold">ETB {order.total}</td>
+                <td className="px-4 py-4 font-semibold">ETB {order.total_amount}</td>
                 <td className="px-4 py-4">
                   <div className="flex space-x-2">
                     {order.status === 'Pending' && (

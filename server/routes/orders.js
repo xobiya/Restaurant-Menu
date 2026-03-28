@@ -2,8 +2,26 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 
+// GET /api/orders
+// Fetch all orders for admin dashboard
+router.get('/', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { created_at: 'desc' },
+      include: {
+        orderItems: {
+          include: { menuItem: true },
+        },
+      },
+    });
+    res.json(orders);
+  } catch (error) {
+    console.error('Failed to fetch orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
 // POST /api/orders
-// Create a new order
 router.post('/', async (req, res) => {
   const { table_number, items } = req.body;
   // items: [{ menuItemId, quantity }]
@@ -116,6 +134,34 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Failed to fetch order:', error);
     res.status(500).json({ error: 'Failed to fetch order status' });
+  }
+});
+
+// PATCH /api/orders/:id/status
+// Update order status (Pending -> Preparing -> etc.)
+router.patch('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: {
+        orderItems: {
+          include: { menuItem: true },
+        },
+      },
+    });
+
+    // Notify clients (customer's TrackView and other admins)
+    req.io.emit(`orderStatusUpdate:${id}`, updatedOrder);
+    req.io.emit('orderUpdated', updatedOrder);
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Failed to update order status:', error);
+    res.status(500).json({ error: 'Failed to update order status' });
   }
 });
 
