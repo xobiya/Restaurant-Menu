@@ -1,0 +1,128 @@
+import { useState, useEffect } from 'react';
+import { Check, ChefHat, AlertCircle } from 'lucide-react';
+import { io } from 'socket.io-client';
+
+const StatusBadge = ({ status }) => {
+  const configs = {
+    'Pending': { color: 'bg-orange-500', icon: AlertCircle, pulse: true },
+    'Preparing': { color: 'bg-blue-500', icon: ChefHat, pulse: true },
+    'Ready': { color: 'bg-green-500', icon: Check, pulse: false },
+    'Completed': { color: 'bg-gray-500', icon: Check, pulse: false },
+  };
+
+  const config = configs[status] || configs['Pending'];
+  const Icon = config.icon;
+
+  return (
+    <div className={`flex items-center space-x-2 px-2 py-1 rounded-full text-xs font-semibold ${config.color} text-white`}>
+      {config.pulse && (
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+        </span>
+      )}
+      <Icon size={12} strokeWidth={2.5} />
+      <span>{status}</span>
+    </div>
+  );
+};
+
+export default function AdminOrderFeed() {
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    // Connect to socket server
+    const socket = io('http://localhost:5000'); // Use env for production
+
+    // Initial fetch from API (Mocked for now)
+    const mockOrders = [
+      { id: '1234', table: 5, total: 450, status: 'Pending', time: '2 mins ago' },
+      { id: '1235', table: 2, total: 120, status: 'Preparing', time: '5 mins ago' },
+      { id: '1236', table: 8, total: 890, status: 'Ready', time: '10 mins ago' },
+    ];
+    setOrders(mockOrders);
+
+    // Listen for real-time updates
+    socket.on('newOrder', (newOrder) => {
+      console.log('New real-time order received:', newOrder);
+      setOrders(prev => [{
+        id: newOrder.id.substring(0, 8),
+        table: newOrder.table_number,
+        status: newOrder.status,
+        total: newOrder.total_amount,
+        time: 'Just now'
+      }, ...prev]);
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  const updateStatus = (id, newStatus) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Live Orders</h2>
+        <span className="text-xs text-textMuted bg-surface px-2 py-1 rounded border border-white/5">
+          {orders.length} Active
+        </span>
+      </div>
+
+      <div className="glass-panel overflow-hidden border border-white/5 rounded-xl">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-white/5 text-textMuted uppercase text-[10px] font-bold tracking-wider">
+            <tr>
+              <th className="px-4 py-3">ID</th>
+              <th className="px-4 py-3">Table</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {orders.map((order) => (
+              <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                <td className="px-4 py-4 font-mono text-xs">#{order.id}</td>
+                <td className="px-4 py-4 font-bold">T-{order.table}</td>
+                <td className="px-4 py-4">
+                  <StatusBadge status={order.status} />
+                </td>
+                <td className="px-4 py-4 font-semibold">ETB {order.total}</td>
+                <td className="px-4 py-4">
+                  <div className="flex space-x-2">
+                    {order.status === 'Pending' && (
+                      <button 
+                        onClick={() => updateStatus(order.id, 'Preparing')}
+                        className="p-1 hover:text-blue-400 transition-colors"
+                      >
+                        Start
+                      </button>
+                    )}
+                    {order.status === 'Preparing' && (
+                      <button 
+                        onClick={() => updateStatus(order.id, 'Ready')}
+                        className="p-1 hover:text-green-400 transition-colors"
+                      >
+                        Ready
+                      </button>
+                    )}
+                    {order.status === 'Ready' && (
+                      <button 
+                        onClick={() => updateStatus(order.id, 'Completed')}
+                        className="p-1 hover:text-gray-400 transition-colors"
+                      >
+                         Done
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
