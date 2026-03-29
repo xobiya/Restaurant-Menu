@@ -7,26 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#121212', // Deep Charcoal
-        surface: 'rgba(255, 255, 255, 0.05)', // Glassmorphism surface
-        primary: '#3b82f6', // Interactive elements
-        textMain: '#ffffff',
-        textMuted: '#9ca3af',
+        background: '#0f1113',
+        surface: '#181c20',
+        surfaceSoft: '#21262c',
+        primary: '#c58a3d',
+        primaryDark: '#a6712f',
+        textMain: '#f6f1e8',
+        textMuted: '#b8ad9f',
       },
       fontFamily: {
-        sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Noto Sans Ethiopic', 'sans-serif'],
       },
       spacing: {
-        'thumb': '30vh', // Thumb zone definition
-        'bento': '0.75rem', // Bento grid gap
+        thumb: '30vh',
+        bento: '0.875rem',
       },
       borderRadius: {
-        'bento': '1.5rem', // 1.5rem for bento cards
+        bento: '1.25rem',
       },
       scale: {
-        'haptic': '0.95', // Haptic simulation scale down
-      }
+        haptic: '0.98',
+      },
     },
   },
   plugins: [],
-}
+};

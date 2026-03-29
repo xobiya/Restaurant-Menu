@@ -1,37 +1,55 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
-import { Minus, Plus, Trash2, ArrowRight, WalletCards } from 'lucide-react';
+import { Minus, Plus, Trash2, ArrowRight, WalletCards, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import api from '../../lib/api';
 import FastImage from '../../components/common/FastImage';
-import { bi } from '../../lib/locale';
+import LanguageSwitch from '../../components/common/LanguageSwitch';
+import { useLocale } from '../../lib/locale';
+import { getTableNumber, setTableNumber } from '../../lib/table';
 
 export default function CartView() {
   const { cartItems, removeItem, updateQuantity, getCartTotal, getTotalItems, clearCart } = useCartStore();
   const navigate = useNavigate();
+  const { t } = useLocale();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState('Chapa');
   const [error, setError] = useState('');
+  const [tableNumber, setTableNumberState] = useState(getTableNumber());
+  const [tableInput, setTableInput] = useState(getTableNumber() ? String(getTableNumber()) : '');
 
   const total = getCartTotal();
 
+  const saveTable = () => {
+    if (!setTableNumber(tableInput)) {
+      setError(t('tableRequired'));
+      return;
+    }
+    setError('');
+    const current = getTableNumber();
+    setTableNumberState(current);
+  };
+
   const handleCheckout = async () => {
+    const activeTable = getTableNumber();
+    if (!activeTable) {
+      setError(t('tableRequired'));
+      return;
+    }
     if (cartItems.length === 0) return;
     setIsProcessing(true);
     setError('');
 
     try {
-      // 1. Create order in DB first
       const orderResponse = await api.post('/orders', {
-        table_number: Number(localStorage.getItem('table_number') || 1),
-        items: cartItems.map(item => ({ menuItemId: item.id, quantity: item.quantity }))
+        table_number: activeTable,
+        items: cartItems.map((item) => ({ menuItemId: item.id, quantity: item.quantity })),
       });
 
       const orderId = orderResponse.data.id;
       localStorage.setItem('last_order_id', orderId);
 
-      // 2. Initiate Payment (Chapa/Telebirr)
       const paymentResponse = await api.post('/payments/initiate', {
         orderId,
         provider: paymentProvider,
@@ -40,7 +58,6 @@ export default function CartView() {
 
       clearCart();
 
-      // 3. Redirect to checkout page (gateway or mock)
       if (paymentResponse.data.checkoutUrl) {
         window.location.href = paymentResponse.data.checkoutUrl;
       } else if (paymentResponse.data.tx_ref) {
@@ -48,144 +65,149 @@ export default function CartView() {
       } else {
         navigate(`/track/${orderId}`);
       }
-    } catch (error) {
-      console.error('Checkout failed:', error);
+    } catch (checkoutError) {
+      console.error('Checkout failed:', checkoutError);
       setIsProcessing(false);
-      setError(error?.response?.data?.error || bi('Checkout failed. Ensure backend is running.', 'ክፍያ አልተሳካም። ባክኤንድ እየሰራ መሆኑን ያረጋግጡ።'));
+      setError(checkoutError?.response?.data?.error || t('checkoutFailed'));
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="pt-6 px-4 flex flex-col min-h-screen"
-    >
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">{bi('Your Order', 'ትዕዛዝዎ')}</h1>
-        <span className="bg-surface px-3 py-1 rounded-full text-sm font-medium border border-white/10">
-          {getTotalItems()} {bi('items', 'እቃዎች')}
-        </span>
+    <div className="px-4 pt-6 pb-36">
+      <div className="glass-panel rounded-2xl p-4 mb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1>{t('yourOrder')}</h1>
+            <p className="text-sm text-textMuted mt-1">
+              {getTotalItems()} {t('items')}
+            </p>
+          </div>
+          <LanguageSwitch />
+        </div>
+
+        <div className="mt-3 flex gap-2 items-center">
+          <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-surfaceSoft px-3 py-2 text-sm text-textMuted">
+            <MapPin size={14} className="text-primary" />
+            <span>
+              {t('table')}: <span className="font-semibold text-textMain">{tableNumber || '-'}</span>
+            </span>
+          </div>
+          <input
+            type="number"
+            min="1"
+            value={tableInput}
+            onChange={(e) => setTableInput(e.target.value)}
+            placeholder={t('table')}
+            className="premium-input h-10 py-2"
+          />
+          <button
+            onClick={saveTable}
+            className="h-10 px-3 rounded-xl bg-primary text-black text-sm font-semibold hover:bg-primaryDark"
+          >
+            {t('editTable')}
+          </button>
+        </div>
       </div>
 
       {cartItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-grow opacity-50 space-y-4">
-          <Trash2 size={48} strokeWidth={1} />
-          <p className="text-lg">{bi('Your order is empty.', 'ትዕዛዝዎ ባዶ ነው።')}</p>
+        <div className="glass-panel rounded-2xl p-10 text-center text-textMuted">
+          <Trash2 size={30} className="mx-auto mb-3 opacity-70" />
+          <p>{t('orderEmpty')}</p>
         </div>
       ) : (
-        <div className="space-y-4 flex-grow pb-[120px]">
+        <div className="space-y-3">
           {cartItems.map((item) => (
             <motion.div
-              layout
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
               key={item.id}
-              className="glass-panel p-4 rounded-2xl flex items-center justify-between"
+              layout
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-panel rounded-2xl p-3 flex items-center justify-between gap-3"
             >
-              <div className="flex items-center space-x-4">
-                 <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg flex-shrink-0">
-                    {item.image_url ? (
-                      <FastImage
-                        src={item.image_url}
-                        alt={item.name}
-                        width={240}
-                        sizes="64px"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-primary/20" />
-                    )}
-                 </div>
-                 <div>
-                   <h3 className="font-semibold text-white truncate max-w-[120px]">{item.name}</h3>
-                   <p className="text-primary font-medium">ETB {item.price}</p>
-                 </div>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                  {item.image_url ? (
+                    <FastImage src={item.image_url} alt={item.name} width={240} sizes="64px" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-surfaceSoft" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate">{item.name}</h3>
+                  <p className="text-sm text-primary font-bold">ETB {item.price}</p>
+                </div>
               </div>
 
-              <div className="flex flex-col items-end justify-between h-full space-y-2">
-                 <button 
-                   onClick={() => removeItem(item.id)} 
-                   className="text-red-400 hover:text-red-300 p-1"
-                 >
-                   <Trash2 size={18} />
-                 </button>
-                 <div className="flex items-center bg-background rounded-full border border-white/10 p-1">
-                    <button 
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full active:bg-white/10"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full active:bg-white/10 text-primary"
-                    >
-                      <Plus size={14} />
-                    </button>
-                 </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-300 p-1">
+                  <Trash2 size={16} />
+                </button>
+                <div className="flex items-center rounded-full border border-white/15 bg-surfaceSoft p-1">
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 text-primary"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Checkout Overlay Area */}
       {cartItems.length > 0 && (
-         <motion.div 
-           initial={{ y: 50, opacity: 0 }}
-           animate={{ y: 0, opacity: 1 }}
-           className="fixed bottom-[90px] left-4 right-4 glass-panel p-5 rounded-[2rem] shadow-2xl z-40"
-         >
-            <div className="flex justify-between items-center mb-4">
-               <span className="text-textMuted font-medium text-lg">{bi('Subtotal', 'ጠቅላላ')}</span>
-               <span className="text-2xl font-bold text-white">ETB {total}</span>
-            </div>
+        <div className="fixed bottom-[84px] left-4 right-4 glass-panel rounded-2xl p-4 z-40">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-textMuted font-medium">{t('subtotal')}</span>
+            <span className="text-xl font-extrabold text-primary">ETB {total.toFixed(2)}</span>
+          </div>
 
-            <div className="mb-4">
-              <p className="text-xs uppercase tracking-wider text-textMuted mb-2">
-                {bi('Payment Method', 'የክፍያ ዘዴ')}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {['Chapa', 'Telebirr'].map((provider) => (
-                  <button
-                    key={provider}
-                    type="button"
-                    onClick={() => setPaymentProvider(provider)}
-                    className={`rounded-xl py-2 px-3 text-sm font-semibold border transition-colors ${
-                      paymentProvider === provider
-                        ? 'bg-primary border-primary text-white'
-                        : 'bg-surface border-white/10 text-textMuted hover:text-white'
-                    }`}
-                  >
-                    <span className="inline-flex items-center space-x-2">
-                      <WalletCards size={14} />
-                      <span>{provider}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="text-xs text-textMuted mb-3">
+            {t('table')}: <span className="text-textMain font-semibold">{tableNumber || '-'}</span>
+          </div>
 
-            {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-            
-            <button
-               disabled={isProcessing}
-               onClick={handleCheckout}
-               className={`w-full py-4 rounded-xl flex items-center justify-center space-x-2 text-lg font-semibold transition-all ${
-                 isProcessing 
-                 ? 'bg-primary/50 cursor-not-allowed opacity-80' 
-                 : 'bg-primary text-white hover:bg-blue-600 active:scale-95 shadow-lg shadow-primary/30'
-               }`}
-            >
-               <span>{isProcessing ? bi('Processing payment...', 'ክፍያ በሂደት ላይ...') : bi('Place Order & Pay', 'ትዕዛዝ አስገባ እና ክፈል')}</span>
-               {!isProcessing && <ArrowRight size={20} />}
-            </button>
-         </motion.div>
+          <div className="mb-3">
+            <p className="text-xs uppercase tracking-wide text-textMuted mb-2">{t('paymentMethod')}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {['Chapa', 'Telebirr'].map((provider) => (
+                <button
+                  key={provider}
+                  onClick={() => setPaymentProvider(provider)}
+                  className={`h-10 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 ${
+                    paymentProvider === provider
+                      ? 'bg-primary border-primary text-black'
+                      : 'bg-surfaceSoft border-white/10 text-textMuted'
+                  }`}
+                >
+                  <WalletCards size={14} />
+                  <span>{provider}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
+
+          <button
+            disabled={isProcessing}
+            onClick={handleCheckout}
+            className={`w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 ${
+              isProcessing ? 'bg-primary/60 text-black cursor-not-allowed' : 'bg-primary hover:bg-primaryDark text-black'
+            }`}
+          >
+            <span>{isProcessing ? t('processingPayment') : t('placeOrderPay')}</span>
+            {!isProcessing && <ArrowRight size={18} />}
+          </button>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }
