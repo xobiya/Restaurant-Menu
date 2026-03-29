@@ -14,7 +14,7 @@ export default {
         textMuted: '#9ca3af',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'], // Variable Font Look
+        sans: ['Inter', 'Noto Sans Ethiopic', 'sans-serif'],
       },
       spacing: {
         'thumb': '30vh', // Thumb zone definition

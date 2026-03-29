@@ -6,9 +6,9 @@ export default function GlassNav() {
   const cartItemsCount = useCartStore((state) => state.cartItems.reduce((acc, item) => acc + item.quantity, 0));
 
   const navItems = [
-    { to: '/', icon: Home, label: 'Menu' },
-    { to: '/cart', icon: ShoppingBag, label: 'Cart', badge: cartItemsCount },
-    { to: '/track', icon: Clock, label: 'Track' },
+    { to: '/menu', icon: Home, label: 'ምናሌ' },
+    { to: '/order', icon: ShoppingBag, label: 'ትዕዛዝ', badge: cartItemsCount },
+    { to: '/track', icon: Clock, label: 'ክትትል' },
   ];
 
   return (

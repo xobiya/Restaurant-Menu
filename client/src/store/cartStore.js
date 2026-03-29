@@ -7,17 +7,24 @@ export const useCartStore = create(
       cartItems: [],
       
       addItem: (item) => {
+        get().addItemWithQuantity(item, 1);
+      },
+
+      addItemWithQuantity: (item, quantity = 1) => {
+        const qty = Number(quantity);
+        if (!Number.isInteger(qty) || qty < 1) return;
+
         const { cartItems } = get();
         const existingItem = cartItems.find((i) => i.id === item.id);
         
         if (existingItem) {
           set({
             cartItems: cartItems.map((i) =>
-              i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === item.id ? { ...i, quantity: i.quantity + qty } : i
             ),
           });
         } else {
-          set({ cartItems: [...cartItems, { ...item, quantity: 1 }] });
+          set({ cartItems: [...cartItems, { ...item, quantity: qty }] });
         }
       },
 

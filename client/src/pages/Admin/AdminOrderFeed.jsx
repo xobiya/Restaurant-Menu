@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Check, ChefHat, AlertCircle } from 'lucide-react';
 import { io } from 'socket.io-client';
+import api from '../../lib/api';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 const StatusBadge = ({ status }) => {
   const configs = {
@@ -37,7 +37,7 @@ export default function AdminOrderFeed() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/orders`);
+        const response = await api.get('/orders');
         setOrders(response.data);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
@@ -49,7 +49,7 @@ export default function AdminOrderFeed() {
     fetchOrders();
 
     // Connect to socket server
-    const socket = io('http://localhost:5000');
+    const socket = io(SOCKET_URL);
 
     // Listen for real-time updates
     socket.on('newOrder', (newOrder) => {
@@ -57,13 +57,17 @@ export default function AdminOrderFeed() {
       setOrders(prev => [newOrder, ...prev]);
     });
 
+    socket.on('orderUpdated', (updatedOrder) => {
+      setOrders((prev) => prev.map((order) => (order.id === updatedOrder.id ? updatedOrder : order)));
+    });
+
     return () => socket.disconnect();
   }, []);
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await axios.patch(`${API_BASE_URL}/orders/${id}/status`, { status: newStatus });
-      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+      const response = await api.patch(`/orders/${id}/status`, { status: newStatus });
+      setOrders(prev => prev.map(o => o.id === id ? response.data : o));
     } catch (error) {
       console.error('Failed to update status:', error);
     }
@@ -87,6 +91,7 @@ export default function AdminOrderFeed() {
               <th className="px-4 py-3">ID</th>
               <th className="px-4 py-3">Table</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
@@ -98,6 +103,17 @@ export default function AdminOrderFeed() {
                 <td className="px-4 py-4 font-bold">T-{order.table_number}</td>
                 <td className="px-4 py-4">
                   <StatusBadge status={order.status} />
+                </td>
+                <td className="px-4 py-4">
+                  <span className={`text-xs font-semibold ${
+                    order.payment_status === 'Paid'
+                      ? 'text-green-400'
+                      : order.payment_status === 'Failed'
+                        ? 'text-red-400'
+                        : 'text-orange-400'
+                  }`}>
+                    {order.payment_status}
+                  </span>
                 </td>
                 <td className="px-4 py-4 font-semibold">ETB {order.total_amount}</td>
                 <td className="px-4 py-4">

@@ -1,12 +1,33 @@
-import { useState } from 'react';
-import { QrCode, Printer, Download, Plus, Minus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Printer, Download, Plus, Minus } from 'lucide-react';
 
 export default function AdminQRGenerator() {
   const [tableCount, setTableCount] = useState(10);
   const baseUrl = window.location.origin;
+  const tableCards = useMemo(
+    () =>
+      Array.from({ length: tableCount }, (_, i) => {
+        const tableNum = i + 1;
+        const url = `${baseUrl}/table/${tableNum}`;
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+        return { tableNum, url, qrSrc };
+      }),
+    [baseUrl, tableCount]
+  );
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async (qrSrc, tableNum) => {
+    const response = await fetch(qrSrc);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = `table-${tableNum}-qr.png`;
+    a.click();
+    URL.revokeObjectURL(objectUrl);
   };
 
   return (
@@ -48,26 +69,21 @@ export default function AdminQRGenerator() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:grid-cols-2">
-        {[...Array(tableCount)].map((_, i) => {
-          const tableNum = i + 1;
-          const url = `${baseUrl}/table/${tableNum}`;
-          
+        {tableCards.map(({ tableNum, url, qrSrc }) => {
           return (
             <div key={tableNum} className="glass-panel p-8 rounded-3xl flex flex-col items-center space-y-6 border border-white/5 hover:border-primary/30 transition-all group relative overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
-                   <Download size={20} className="cursor-pointer hover:text-primary" />
+                   <button onClick={() => handleDownload(qrSrc, tableNum)} className="hover:text-primary">
+                     <Download size={20} className="cursor-pointer" />
+                   </button>
                </div>
                
                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2">
                    <span className="text-2xl font-black">T{tableNum}</span>
                </div>
                
-               {/* Mock QR Code UI */}
-               <div className="w-48 h-48 bg-white p-4 rounded-xl shadow-inner relative">
-                    <div className="w-full h-full bg-[radial-gradient(#121212_1px,transparent_1px)] [background-size:8px_8px] opacity-20" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <QrCode size={120} className="text-[#121212]" strokeWidth={1.5} />
-                    </div>
+               <div className="w-48 h-48 bg-white p-2 rounded-xl shadow-inner">
+                 <img src={qrSrc} alt={`Table ${tableNum} QR`} className="w-full h-full object-cover rounded-lg" />
                </div>
 
                <div className="text-center">

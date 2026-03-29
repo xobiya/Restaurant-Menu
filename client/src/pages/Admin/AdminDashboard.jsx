@@ -1,8 +1,9 @@
-import { NavLink, Routes, Route, Link } from 'react-router-dom';
-import { LayoutDashboard, Utensils, Settings, LogOut, QrCode } from 'lucide-react';
+import { NavLink, Routes, Route, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Utensils, LogOut, QrCode, CreditCard } from 'lucide-react';
 import AdminOrderFeed from './AdminOrderFeed';
 import AdminMenuManager from './AdminMenuManager';
 import AdminQRGenerator from './AdminQRGenerator';
+import AdminPayments from './AdminPayments';
 
 const AdminSidebarItem = ({ to, icon: Icon, label }) => (
   <NavLink
@@ -19,6 +20,13 @@ const AdminSidebarItem = ({ to, icon: Icon, label }) => (
 );
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    navigate('/admin/login');
+  };
+
   return (
     <div className="flex h-screen bg-[#0a0a0a]">
       {/* Admin Sidebar */}
@@ -32,15 +40,18 @@ export default function AdminDashboard() {
           <nav className="space-y-2">
             <AdminSidebarItem to="/admin/orders" icon={LayoutDashboard} label="Live Feed" />
             <AdminSidebarItem to="/admin/menu" icon={Utensils} label="Menu Manager" />
+            <AdminSidebarItem to="/admin/payments" icon={CreditCard} label="Payments" />
             <AdminSidebarItem to="/admin/qr" icon={QrCode} label="QR Generator" />
-            <AdminSidebarItem to="/admin/settings" icon={Settings} label="Settings" />
           </nav>
         </div>
 
-        <Link to="/" className="flex items-center space-x-3 px-4 py-3 text-red-400 hover:text-red-300 transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-3 px-4 py-3 text-red-400 hover:text-red-300 transition-colors"
+        >
           <LogOut size={20} />
           <span className="font-medium text-sm">Exit Admin</span>
-        </Link>
+        </button>
       </aside>
 
       {/* Main Content Area */}
@@ -59,8 +70,9 @@ export default function AdminDashboard() {
           <Routes>
             <Route path="orders" element={<AdminOrderFeed />} />
             <Route path="menu" element={<AdminMenuManager />} />
+            <Route path="payments" element={<AdminPayments />} />
             <Route path="qr" element={<AdminQRGenerator />} />
-            <Route path="/" element={<AdminOrderFeed />} />
+            <Route index element={<AdminOrderFeed />} />
           </Routes>
         </div>
       </main>

@@ -1,11 +1,10 @@
 require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+const prisma = require('../prismaClient');
 
 async function createAdmin() {
-  const username = 'admin';
-  const password = 'admin123'; // Default password
+  const username = process.env.ADMIN_USERNAME || 'admin';
+  const password = process.env.ADMIN_PASSWORD || 'admin123'; // default for local setup
 
   console.log(`Creating admin: ${username}...`);
 
