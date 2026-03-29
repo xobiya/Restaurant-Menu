@@ -6,6 +6,25 @@ datasource db {
   provider = "mysql"
 }
 
+enum OrderStatus {
+  Pending
+  Preparing
+  Ready
+  Completed
+}
+
+enum PaymentStatus {
+  Unpaid
+  Pending
+  Paid
+  Failed
+}
+
+enum PaymentProvider {
+  Chapa
+  Telebirr
+}
+
 model Category {
   id        Int        @id @default(autoincrement())
   name      String
@@ -22,28 +41,41 @@ model MenuItem {
   prep_time    Int         @default(15) // In minutes
   is_available Boolean     @default(true)
   categoryId   Int
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
   category     Category    @relation(fields: [categoryId], references: [id])
   OrderItems   OrderItem[]
 }
 
+model Table {
+  id          Int      @id @default(autoincrement())
+  number      Int      @unique
+  qr_code_url String?  @db.Text
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
 model Order {
-  id             String      @id @default(uuid())
+  id             String       @id @default(uuid())
   table_number   Int
-  total_amount   Decimal     @db.Decimal(10, 2)
-  status         String      @default("Pending") // Pending, Preparing, Ready, Completed
-  payment_status String      @default("Unpaid") // Unpaid, Paid
-  created_at     DateTime    @default(now())
+  total_amount   Decimal      @db.Decimal(10, 2)
+  status         OrderStatus  @default(Pending)
+  payment_status PaymentStatus @default(Unpaid)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
   orderItems     OrderItem[]
+  payments       Payment[]
 }
 
 model OrderItem {
-  id           Int      @id @default(autoincrement())
-  orderId      String
-  menuItemId   Int
-  quantity     Int
-  subtotal     Decimal  @db.Decimal(10, 2)
-  order        Order    @relation(fields: [orderId], references: [id])
-  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+  id         Int      @id @default(autoincrement())
+  orderId    String
+  menuItemId Int
+  quantity   Int
+  subtotal   Decimal  @db.Decimal(10, 2)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 }
 
 model Admin {
@@ -51,4 +83,20 @@ model Admin {
   username      String   @unique
   password_hash String
   created_at    DateTime @default(now())
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  orderId           String
+  provider          PaymentProvider
+  tx_ref            String          @unique
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          String          @default("ETB")
+  status            PaymentStatus   @default(Pending)
+  checkout_url      String?         @db.Text
+  gateway_reference String?
+  raw_payload       Json?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

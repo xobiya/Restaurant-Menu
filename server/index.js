@@ -11,15 +11,14 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 const io = new Server(server, {
   cors: {
-    origin: '*', // Adjust for production
-    methods: ['GET', 'POST'],
+    origin: allowedOrigin,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+    credentials: true,
   },
 });
-
-// Load env variables
-dotenv.config();
 
 // Attach io to requests for usage in routes
 app.use((req, res, next) => {
@@ -29,7 +28,12 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes
@@ -45,7 +49,15 @@ app.use('/api/auth', authRoutes);
 
 // Base route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Restaurant Menu API with Sockets' });
+  res.json({ message: 'Restaurant Menu API is running' });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'restaurant-menu-api',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Socket.io context
