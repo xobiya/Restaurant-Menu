@@ -1,105 +1,347 @@
-# Ethiopian Restaurant Menu & Ordering App
+# Ethiopian Restaurant Menu & Ordering System
 
-Customer-first full-stack ordering app tailored for Ethiopian restaurant service.
+A production-ready full-stack web application for Ethiopian restaurants with:
 
-## What Changed
+- Customer ordering flow (QR/table-first)
+- Real-time kitchen workflow
+- Admin menu/order/payment management
+- MySQL + Prisma backend
+- Mobile-first React frontend
 
-The current frontend now focuses on the customer journey described in the SRS:
+This project is optimized for local restaurant operations in Ethiopia, including bilingual menu fields (Amharic + English), ETB pricing, cash-first ordering, and Telebirr/Chapa payment flow scaffolding.
 
-- Home screen with Amharic-first UX
-- Ethiopian menu categories and dish metadata
-- Cash-first checkout with Telebirr plus additional local payment labels
-- Offline-friendly menu browsing
-- Queued order sync when connectivity returns
-- Local order history for reopening tracking and payment
-- PWA shell with service worker registration and install manifest
+## Product Scope
 
-The backend schema is intentionally kept stable to avoid risky database breakage during this upgrade. The API still supports the existing order/payment flow while the client now behaves more like the Ethiopia-optimized product spec.
+### Customer App
 
-## Stack
+- Browse menu by category
+- Add to cart and place order
+- Track order status live
+- Offline-friendly browsing and queued sync support
 
-- Frontend: React + Vite + Tailwind + Zustand + Socket.IO client
-- Backend: Express + Prisma + Socket.IO
-- Database: MySQL / MariaDB via Prisma
+### Staff App
 
-## Project Structure
+- `ADMIN`: dashboard, menu CRUD, order management, payment visibility, QR table links
+- `KITCHEN`: focused preparation board with status transitions
 
-```txt
-client/   Customer PWA frontend
-server/   Express API + Prisma
-```
-
-## Local Setup
-
-### Backend
-
-```bash
-cd server
-npm install
-copy .env.example .env
-npm run prisma:generate
-npx prisma migrate dev
-npm run seed
-npm run dev
-```
-
-Notes:
-
-- `postinstall` now runs `prisma generate` automatically.
-- `npm run seed` now inserts Ethiopian sample categories and dishes.
-- Running the seed script clears existing demo menu/order/payment data first.
+## Architecture
 
 ### Frontend
 
-```bash
-cd client
-npm install
-copy .env.example .env
-npm run dev
+- React 19 + Vite
+- Tailwind CSS
+- React Router
+- Zustand
+- Socket.IO client
+
+### Backend
+
+- Node.js + Express
+- Prisma ORM
+- MySQL/MariaDB
+- JWT auth (`Bearer` token)
+- Socket.IO server
+
+### Data
+
+- MySQL schema managed from Prisma
+- Bilingual category/item fields (`name_en`, `name_am`, etc.)
+- Role-based users (`CUSTOMER`, `KITCHEN`, `ADMIN`)
+
+## Repository Structure
+
+```txt
+Restaurant-Menu/
+├── client/                    # React frontend (customer + staff routes)
+│   ├── src/
+│   │   ├── pages/Customer
+│   │   ├── pages/Admin
+│   │   ├── components/common
+│   │   ├── components/admin
+│   │   └── lib
+│   └── package.json
+├── server/                    # Express API + Prisma
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── seed.js
+│   ├── routes/
+│   ├── middleware/
+│   ├── scripts/
+│   └── package.json
+└── README.md
 ```
 
-## Main Customer Flow
+## Prerequisites
 
-1. Open the app from `/` or a `/table/:tableNum` QR link.
-2. Browse localized menu categories.
-3. Toggle low-data mode or fasting-first filtering.
-4. Add items to the cart.
-5. Checkout with cash, Telebirr, or another local payment label.
-6. If offline, the order is queued locally and syncs automatically later.
-7. Reopen tracking or payment from the Orders screen.
+- Node.js 18+ (recommended 20+)
+- npm 9+
+- MySQL or MariaDB running locally or remotely
 
-## Main API Endpoints
+## Environment Variables
 
-Menu:
+### Backend (`server/.env`)
 
-- `GET /api/menu`
-- `GET /api/menu/categories`
+Required:
 
-Orders:
+- `DATABASE_URL` (MySQL connection string)
+- `JWT_SECRET`
 
-- `POST /api/orders`
-- `GET /api/orders/:id`
+Common:
+
+- `PORT` (default `5000`)
+- `FRONTEND_URL` (default `http://localhost:5173`)
 
 Payments:
 
-- `POST /api/payments/initiate`
-- `POST /api/payments/mock/complete`
-- `GET /api/payments/tx/:txRef`
+- `CHAPA_SECRET_KEY` (optional for real gateway integration)
+- `TELEBIRR_KEY` (optional for real gateway integration)
+- `PAYMENT_WEBHOOK_SECRET` (optional for webhook signature checks)
 
-Health:
+Seeding / bootstrap accounts:
 
-- `GET /api/health`
+- `ADMIN_EMAIL`
+- `ADMIN_PHONE`
+- `ADMIN_PASSWORD`
+- `ADMIN_USERNAME`
+- `KITCHEN_EMAIL`
+- `KITCHEN_PHONE`
+- `KITCHEN_PASSWORD`
+- `KITCHEN_USERNAME`
 
-## Current Gaps vs Full SRS
+### Frontend (`client/.env`)
 
-The current implementation moves strongly toward the SRS, but a few production-market items are still future work:
+- `VITE_API_BASE_URL` (default `http://localhost:5000/api`)
+- `VITE_SOCKET_URL` (optional, socket URL is auto-derived from API base in current client logic)
 
-- Real Telebirr / M-Pesa / CBE Birr gateway integrations
-- SMS fallback notifications
-- Ethiopian calendar formatting
-- Dedicated restaurant-operations backend separate from the customer app
+## Local Development Setup
 
-## Verification
+### 1. Install Dependencies
 
-- `client`: `npm run build`
-- `server`: `npm run dev` and `GET /api/health`
+```bash
+cd server && npm install
+cd ../client && npm install
+```
+
+### 2. Configure Environment Files
+
+Copy example files and adjust values:
+
+```bash
+cd server
+cp .env.example .env
+
+cd ../client
+cp .env.example .env
+```
+
+PowerShell alternative:
+
+```powershell
+Copy-Item server\.env.example server\.env
+Copy-Item client\.env.example client\.env
+```
+
+### 3. Push Prisma Schema to MySQL
+
+```bash
+cd server
+npm run prisma:generate
+npx prisma db push --accept-data-loss
+```
+
+### 4. Seed Initial Data
+
+```bash
+cd server
+npm run seed
+```
+
+This seeds:
+
+- Ethiopian categories and menu items
+- Admin and kitchen users
+- Table records
+
+### 5. Run Both Apps
+
+Terminal 1:
+
+```bash
+cd server
+npm run dev
+```
+
+Terminal 2:
+
+```bash
+cd client
+npm run dev
+```
+
+Open: `http://localhost:5173`
+
+## Seeded Staff Logins
+
+- Admin: `admin@restaurant.local` / `admin123`
+- Kitchen: `kitchen@restaurant.local` / `kitchen123`
+
+## Client Routes
+
+### Customer
+
+- `/`
+- `/menu`
+- `/order` (cart/checkout)
+- `/orders`
+- `/orders/:orderId`
+- `/payment/:txRef`
+- `/table/:tableNum` (QR/table redirect)
+
+### Staff
+
+- `/staff/login`
+- `/admin/*` (`ADMIN` only)
+- `/kitchen` (`ADMIN` or `KITCHEN`)
+
+## API Reference
+
+Base URL: `/api`
+
+### Health
+
+- `GET /health`
+
+### Auth
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+
+### Menu
+
+- `GET /menu` (public customer menu)
+- `GET /menu/categories` (public category list)
+- `GET /menu/admin` (`ADMIN`)
+- `POST /menu/categories` (`ADMIN`)
+- `PATCH /menu/categories/:id` (`ADMIN`)
+- `DELETE /menu/categories/:id` (`ADMIN`)
+- `POST /menu/items` (`ADMIN`)
+- `PATCH /menu/items/:id` (`ADMIN`)
+- `DELETE /menu/items/:id` (`ADMIN`)
+
+### Orders
+
+- `POST /orders` (public customer checkout)
+- `GET /orders/:id` (public tracking by id/order number)
+- `GET /orders/my?phone=...` (public by customer phone)
+- `GET /orders` (`ADMIN`, `KITCHEN`)
+- `GET /orders/summary` (`ADMIN`)
+- `PATCH /orders/:id/status` (`ADMIN`, `KITCHEN`)
+- `PATCH /orders/:id/payment-status` (`ADMIN`)
+
+### Payments
+
+- `POST /payments/chapa/initialize`
+- `POST /payments/telebirr/initialize`
+- `POST /payments/initiate` (generic)
+- `POST /payments/mock/complete` (development helper)
+- `POST /payments/chapa/webhook`
+- `POST /payments/telebirr/webhook`
+- `GET /payments` (`ADMIN`)
+- `GET /payments/tx/:txRef`
+
+## Socket Events
+
+Server emits real-time events for dashboard and customer tracking:
+
+- `orderPlaced`
+- `statusUpdated`
+- `orderUpdated`
+- `orderStatusUpdate:<orderId>`
+- `paymentUpdated`
+
+## Available Scripts
+
+### Backend (`server/package.json`)
+
+- `npm run dev` - start API with nodemon
+- `npm run start` - start API with node
+- `npm run prisma:generate` - generate Prisma client
+- `npm run prisma:migrate` - Prisma migrate dev
+- `npm run prisma:seed` - Prisma seed command
+- `npm run seed` - run custom seed script
+- `npm run create-admin` - upsert admin account
+- `npm run test-db` - test database connectivity
+
+### Frontend (`client/package.json`)
+
+- `npm run dev` - start Vite dev server
+- `npm run build` - production build
+- `npm run preview` - preview production build
+
+## Deployment Notes
+
+Typical split deployment:
+
+- Frontend: Vercel / Netlify
+- Backend: Render / Railway / VM
+- Database: Managed MySQL or MariaDB
+
+Make sure:
+
+- `FRONTEND_URL` includes production frontend domain in backend env
+- CORS is configured for all allowed origins
+- `JWT_SECRET` is strong and unique per environment
+- HTTPS is enabled for both frontend and backend
+
+## Security Notes
+
+- JWT auth uses `Authorization: Bearer <token>`
+- Role checks enforced server-side for admin/kitchen routes
+- Passwords are hashed with `bcryptjs`
+- Webhook signature support available via `PAYMENT_WEBHOOK_SECRET`
+
+## Troubleshooting
+
+### Prisma client/module errors
+
+Run:
+
+```bash
+cd server
+npm run prisma:generate
+```
+
+### Schema mismatch with DB
+
+Run:
+
+```bash
+cd server
+npx prisma db push --accept-data-loss
+```
+
+### Missing initial users/menu
+
+Run:
+
+```bash
+cd server
+npm run seed
+```
+
+### CORS issues in browser
+
+Verify backend `FRONTEND_URL` includes your frontend origin.
+
+## Current Payment Status
+
+Payment routes are production-shaped but currently safe for development-first integration:
+
+- Chapa and Telebirr initialization endpoints are present
+- Webhook endpoints are present
+- `mock/complete` endpoint supports local payment simulation
+
+## License
+
+This project is currently private/internal unless a license is added by the repository owner.

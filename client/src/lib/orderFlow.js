@@ -20,36 +20,15 @@ export const PAYMENT_METHODS = [
     id: 'Telebirr',
     type: 'digital',
     gatewayProvider: 'Telebirr',
-    description_en: 'Primary mobile payment for local customers.',
+    description_en: 'Primary mobile payment for local Ethiopian customers.',
     description_am: 'ለአካባቢ ደንበኞች ዋና የሞባይል ክፍያ አማራጭ።',
   },
   {
-    id: 'M-Pesa',
+    id: 'Chapa',
     type: 'digital',
     gatewayProvider: 'Chapa',
-    description_en: 'Routed through the shared digital checkout flow.',
-    description_am: 'በአጋራዊ ዲጂታል መክፈያ ፍሰት ይሰራል።',
-  },
-  {
-    id: 'CBE Birr',
-    type: 'digital',
-    gatewayProvider: 'Chapa',
-    description_en: 'Available through the same checkout handoff.',
-    description_am: 'በተመሳሳይ የመክፈያ ሂደት ይገኛል።',
-  },
-  {
-    id: 'HelloCash',
-    type: 'digital',
-    gatewayProvider: 'Chapa',
-    description_en: 'Queued as a digital payment request for the counter.',
-    description_am: 'እንደ ዲጂታል የክፍያ ጥያቄ ይመዘገባል።',
-  },
-  {
-    id: 'Card',
-    type: 'digital',
-    gatewayProvider: 'Chapa',
-    description_en: 'Card and wallet handoff in the same payment flow.',
-    description_am: 'የካርድ እና ዋሌት ክፍያ በተመሳሳይ ፍሰት ይሰራል።',
+    description_en: 'Shared checkout flow for digital payment handoff.',
+    description_am: 'ለዲጂታል ክፍያ የተጋራ መክፈያ ሂደት።',
   },
 ];
 
@@ -87,11 +66,38 @@ export const buildOrderDraft = ({
   };
 };
 
+const initializeDigitalPayment = async (draft, order) => {
+  const methodConfig = getPaymentMethodConfig(draft.paymentMethod);
+
+  if (methodConfig.gatewayProvider === 'Telebirr') {
+    return api.post('/payments/telebirr/initialize', {
+      orderId: order.id,
+      provider: draft.paymentMethod,
+      customerInfo: {
+        name: draft.customerName,
+        phone: draft.phone,
+        table_number: draft.tableNumber,
+      },
+    });
+  }
+
+  return api.post('/payments/chapa/initialize', {
+    orderId: order.id,
+    provider: draft.paymentMethod,
+    customerInfo: {
+      name: draft.customerName,
+      phone: draft.phone,
+      table_number: draft.tableNumber,
+    },
+  });
+};
+
 const createRemoteOrder = async (draft) => {
   const methodConfig = getPaymentMethodConfig(draft.paymentMethod);
 
   const orderResponse = await api.post('/orders', {
     table_number: draft.tableNumber,
+    table_label: String(draft.tableNumber),
     items: draft.items.map((item) => ({
       menuItemId: item.id,
       quantity: item.quantity,
@@ -107,16 +113,7 @@ const createRemoteOrder = async (draft) => {
     return { order, payment: null };
   }
 
-  const paymentResponse = await api.post('/payments/initiate', {
-    orderId: order.id,
-    provider: draft.paymentMethod,
-    customerInfo: {
-      name: draft.customerName,
-      phone: draft.phone,
-      table_number: draft.tableNumber,
-      requestedProvider: draft.paymentMethod,
-    },
-  });
+  const paymentResponse = await initializeDigitalPayment(draft, order);
 
   return {
     order,
@@ -145,6 +142,7 @@ const saveSyncedHistory = (draft, result) => {
   return upsertOrderHistory({
     localId: draft.localId,
     orderId: result.order.id,
+    orderNumber: result.order.order_number,
     txRef: result.payment?.tx_ref || null,
     createdAt: draft.createdAt,
     customerName: draft.customerName,

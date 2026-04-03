@@ -78,6 +78,7 @@ export default function PaymentView() {
   };
 
   const displayProvider =
+    payment?.requested_provider ||
     payment?.raw_payload?.requestedProvider ||
     payment?.raw_payload?.requested_provider ||
     payment?.raw_payload?.customer?.requestedProvider ||
@@ -170,10 +171,12 @@ export default function PaymentView() {
                 Order summary
               </p>
               <div className="mt-4 space-y-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-textMuted">{t('table')}</span>
-                  <span className="font-semibold">#{payment.order?.table_number || 'N/A'}</span>
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-textMuted">{t('table')}</span>
+                  <span className="font-semibold">
+                    {payment.order?.table_label || `#${payment.order?.table_number || 'N/A'}`}
+                  </span>
+              </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-textMuted">{t('paymentMethod')}</span>
                   <span className="font-semibold">{paymentMethodLabel(displayProvider)}</span>

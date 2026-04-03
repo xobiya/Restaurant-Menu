@@ -106,13 +106,12 @@ export default function TrackView() {
   }, [routeOrderId]);
 
   useEffect(() => {
-    if (!routeOrderId) return undefined;
+    const socketTargetId = order?.id || routeOrderId;
+    if (!socketTargetId) return undefined;
 
-    const socket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-    });
+    const socket = io(SOCKET_URL);
 
-    const eventName = `orderStatusUpdate:${routeOrderId}`;
+    const eventName = `orderStatusUpdate:${socketTargetId}`;
     const handleUpdate = (payload) => {
       setOrder((current) => ({
         ...(current || {}),
@@ -126,7 +125,7 @@ export default function TrackView() {
       socket.off(eventName, handleUpdate);
       socket.disconnect();
     };
-  }, [routeOrderId]);
+  }, [order?.id, routeOrderId]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -290,7 +289,7 @@ export default function TrackView() {
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
                       {t('orderDetails')}
                     </p>
-                    <h2 className="mt-2 font-mono text-lg">{order.id}</h2>
+                    <h2 className="mt-2 font-mono text-lg">{order.order_number || order.id}</h2>
                     <p className="mt-2 text-sm text-textMuted">
                       {formatDateTime(order.created_at, language)}
                     </p>
@@ -309,7 +308,7 @@ export default function TrackView() {
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl border border-white/10 bg-surfaceSoft p-4">
                     <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('table')}</p>
-                    <p className="mt-2 text-2xl font-bold">#{order.table_number}</p>
+                    <p className="mt-2 text-2xl font-bold">{order.table_label || `#${order.table_number}`}</p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-surfaceSoft p-4">
                     <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('estimatedTime')}</p>
@@ -321,6 +320,9 @@ export default function TrackView() {
                     <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('total')}</p>
                     <p className="mt-2 text-2xl font-bold">
                       {formatCurrency(order.total_amount, language)}
+                    </p>
+                    <p className="mt-2 text-xs text-textMuted">
+                      {paymentMethodLabel(order.payment_method || 'Cash')}
                     </p>
                   </div>
                 </div>

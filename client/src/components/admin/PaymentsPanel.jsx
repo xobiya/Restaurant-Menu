@@ -57,7 +57,7 @@ export default function PaymentsPanel() {
         <div>
           <h2>Payment monitoring</h2>
           <p className="mt-1 text-sm text-textMuted">
-            Review gateway activity and spot unpaid or failed orders quickly.
+            Review Chapa and Telebirr transactions and compare them against live orders.
           </p>
         </div>
 
@@ -82,14 +82,15 @@ export default function PaymentsPanel() {
           No payment transactions yet.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-surface">
+        <div className="overflow-x-auto rounded-[2rem] border border-white/5 bg-surface shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-white/5 text-xs uppercase tracking-[0.2em] text-textMuted">
               <tr>
                 <th className="px-4 py-4">Tx Ref</th>
                 <th className="px-4 py-4">Order</th>
                 <th className="px-4 py-4">Table</th>
-                <th className="px-4 py-4">Provider</th>
+                <th className="px-4 py-4">Requested</th>
+                <th className="px-4 py-4">Gateway</th>
                 <th className="px-4 py-4">Amount</th>
                 <th className="px-4 py-4">Status</th>
                 <th className="px-4 py-4">Created</th>
@@ -99,8 +100,12 @@ export default function PaymentsPanel() {
               {payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-white/5">
                   <td className="px-4 py-4 font-mono text-xs">{payment.tx_ref}</td>
-                  <td className="px-4 py-4 font-mono text-xs">{payment.orderId}</td>
-                  <td className="px-4 py-4">#{payment.order?.table_number || 'N/A'}</td>
+                  <td className="px-4 py-4">
+                    <p className="font-semibold">{payment.order?.order_number || payment.orderId}</p>
+                    <p className="mt-1 text-xs text-textMuted">{payment.order?.status || 'Unknown'}</p>
+                  </td>
+                  <td className="px-4 py-4">{payment.order?.table_label || payment.order?.table_number || 'N/A'}</td>
+                  <td className="px-4 py-4">{payment.requested_provider || payment.provider}</td>
                   <td className="px-4 py-4">{payment.provider}</td>
                   <td className="px-4 py-4">{formatCurrency(payment.amount)}</td>
                   <td className={`px-4 py-4 font-semibold ${statusTone(payment.status)}`}>

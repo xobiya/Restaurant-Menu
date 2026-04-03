@@ -11,6 +11,7 @@ enum OrderStatus {
   Preparing
   Ready
   Completed
+  Cancelled
 }
 
 enum PaymentStatus {
@@ -25,31 +26,70 @@ enum PaymentProvider {
   Telebirr
 }
 
+enum UserRole {
+  CUSTOMER
+  KITCHEN
+  ADMIN
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String?  @unique
+  phone         String?  @unique
+  password_hash String
+  role          UserRole @default(CUSTOMER)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  orders        Order[]
+}
+
 model Category {
-  id        Int        @id @default(autoincrement())
-  name      String
-  icon      String
-  menuItems MenuItem[]
+  id             Int        @id @default(autoincrement())
+  slug           String?    @unique
+  name           String
+  name_en        String?
+  name_am        String?
+  description_en String?    @db.Text
+  description_am String?    @db.Text
+  icon           String     @default("Utensils")
+  sort_order     Int        @default(0)
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @default(now()) @updatedAt
+  menuItems      MenuItem[]
 }
 
 model MenuItem {
-  id           Int         @id @default(autoincrement())
-  name         String
-  description  String      @db.Text
-  price        Decimal     @db.Decimal(10, 2)
-  image_url    String      @db.Text
-  prep_time    Int         @default(15) // In minutes
-  is_available Boolean     @default(true)
-  categoryId   Int
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  category     Category    @relation(fields: [categoryId], references: [id])
-  OrderItems   OrderItem[]
+  id              Int         @id @default(autoincrement())
+  name            String
+  name_en         String?
+  name_am         String?
+  description     String      @db.Text
+  description_en  String?     @db.Text
+  description_am  String?     @db.Text
+  portion_note_en String?     @db.Text
+  portion_note_am String?     @db.Text
+  price           Decimal     @db.Decimal(10, 2)
+  image_url       String      @db.Text
+  prep_time       Int         @default(15)
+  is_available    Boolean     @default(true)
+  is_fasting      Boolean     @default(false)
+  is_veg          Boolean     @default(false)
+  spiciness       Int         @default(0)
+  featured        Boolean     @default(false)
+  categoryId      Int
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  category        Category    @relation(fields: [categoryId], references: [id])
+  orderItems      OrderItem[]
+
+  @@index([is_available, featured])
 }
 
 model Table {
   id          Int      @id @default(autoincrement())
   number      Int      @unique
+  label       String?
   qr_code_url String?  @db.Text
   is_active   Boolean  @default(true)
   created_at  DateTime @default(now())
@@ -57,15 +97,28 @@ model Table {
 }
 
 model Order {
-  id             String       @id @default(uuid())
-  table_number   Int
-  total_amount   Decimal      @db.Decimal(10, 2)
-  status         OrderStatus  @default(Pending)
-  payment_status PaymentStatus @default(Unpaid)
-  created_at     DateTime     @default(now())
-  updated_at     DateTime     @updatedAt
-  orderItems     OrderItem[]
-  payments       Payment[]
+  id              String        @id @default(uuid())
+  order_number    String?       @unique
+  userId          String?
+  customer_name   String?
+  customer_phone  String?
+  table_number    Int
+  table_label     String?
+  subtotal_amount Decimal?      @db.Decimal(10, 2)
+  service_charge  Decimal       @default(0) @db.Decimal(10, 2)
+  total_amount    Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(Pending)
+  payment_method  String?
+  payment_status  PaymentStatus @default(Unpaid)
+  notes           String?       @db.Text
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  orderItems      OrderItem[]
+  payments        Payment[]
+  user            User?         @relation(fields: [userId], references: [id])
+
+  @@index([created_at])
+  @@index([status, payment_status])
 }
 
 model OrderItem {
@@ -86,17 +139,20 @@ model Admin {
 }
 
 model Payment {
-  id                String          @id @default(cuid())
-  orderId           String
-  provider          PaymentProvider
-  tx_ref            String          @unique
-  amount            Decimal         @db.Decimal(10, 2)
-  currency          String          @default("ETB")
-  status            PaymentStatus   @default(Pending)
-  checkout_url      String?         @db.Text
-  gateway_reference String?
-  raw_payload       Json?
-  created_at        DateTime        @default(now())
-  updated_at        DateTime        @updatedAt
-  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                 String          @id @default(cuid())
+  orderId            String
+  provider           PaymentProvider
+  requested_provider String?
+  tx_ref             String          @unique
+  amount             Decimal         @db.Decimal(10, 2)
+  currency           String          @default("ETB")
+  status             PaymentStatus   @default(Pending)
+  checkout_url       String?         @db.Text
+  gateway_reference  String?
+  raw_payload        Json?
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  order              Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([provider, status])
 }

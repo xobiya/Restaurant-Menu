@@ -1,22 +1,30 @@
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Shield, Soup } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
+import { getStoredStaffToken, getStoredStaffUser, saveStaffSession } from '../../lib/staffSession';
 
 const getErrorMessage = (error, fallback) => error?.response?.data?.error || fallback;
 
+const redirectForRole = (role, fallbackPath = '/admin') =>
+  role === 'KITCHEN' ? '/kitchen' : fallbackPath;
+
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('admin');
+  const location = useLocation();
+  const fallbackPath = location.state?.from || '/admin';
+
+  const [identifier, setIdentifier] = useState('admin@restaurant.local');
   const [password, setPassword] = useState('admin123');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (localStorage.getItem('admin_token')) {
-      navigate('/admin/orders', { replace: true });
+    if (getStoredStaffToken()) {
+      const user = getStoredStaffUser();
+      navigate(redirectForRole(user?.role, fallbackPath), { replace: true });
     }
-  }, [navigate]);
+  }, [fallbackPath, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -25,12 +33,16 @@ export default function AdminLogin() {
 
     try {
       const response = await api.post('/auth/login', {
-        username,
+        identifier,
         password,
       });
 
-      localStorage.setItem('admin_token', response.data.token);
-      navigate('/admin/orders', { replace: true });
+      saveStaffSession({
+        token: response.data.token,
+        user: response.data.user,
+      });
+
+      navigate(redirectForRole(response.data.user?.role, fallbackPath), { replace: true });
     } catch (loginError) {
       setError(getErrorMessage(loginError, 'Login failed. Check your credentials.'));
     } finally {
@@ -40,29 +52,33 @@ export default function AdminLogin() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="glass-panel w-full max-w-md rounded-[2rem] border border-white/10 p-8">
+      <div className="glass-panel w-full max-w-lg rounded-[2rem] border border-white/10 p-8">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Shield size={22} />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
-              Admin
+              Staff Access
             </p>
             <h1 className="mt-1 text-3xl">Restaurant control room</h1>
           </div>
         </div>
 
+        <p className="mt-4 text-sm text-textMuted">
+          Sign in as an admin or kitchen user to manage orders, menu updates, and service flow.
+        </p>
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
-              Username
+              Email or phone
             </label>
             <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
               className="premium-input"
-              placeholder="admin"
+              placeholder="admin@restaurant.local"
             />
           </div>
 
@@ -90,6 +106,25 @@ export default function AdminLogin() {
             <span>{submitting ? 'Signing in...' : 'Sign in'}</span>
           </button>
         </form>
+
+        <div className="mt-6 grid gap-3 rounded-2xl border border-white/10 bg-surfaceSoft p-4 text-sm text-textMuted sm:grid-cols-2">
+          <div>
+            <div className="flex items-center gap-2 text-textMain">
+              <Shield size={16} />
+              <span className="font-semibold">Admin demo</span>
+            </div>
+            <p className="mt-2">`admin@restaurant.local`</p>
+            <p>`admin123`</p>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 text-textMain">
+              <Soup size={16} />
+              <span className="font-semibold">Kitchen demo</span>
+            </div>
+            <p className="mt-2">`kitchen@restaurant.local`</p>
+            <p>`kitchen123`</p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,4 @@
-import {
-  Clock3,
-  Languages,
-  Leaf,
-  MenuSquare,
-  PackageCheck,
-  SignalHigh,
-  ShoppingCart,
-  WalletCards,
-} from 'lucide-react';
+import { Clock3, Languages, Leaf, MenuSquare, Shield, SignalHigh, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -46,7 +37,7 @@ function PreferenceToggle({ active, label, helper, onClick, icon: Icon }) {
 }
 
 export default function HomeView() {
-  const { language, setLanguage, t, statusLabel } = useLocale();
+  const { language, setLanguage, t, statusLabel, paymentMethodLabel } = useLocale();
   const [preferences, setPreferences] = useState(getCustomerPreferences);
   const [history, setHistory] = useState(() => getOrderHistory().slice(0, 3));
   const [queuedCount, setQueuedCount] = useState(() => getQueuedOrders().length);
@@ -78,15 +69,12 @@ export default function HomeView() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
       <section className="glass-panel overflow-hidden rounded-[2rem] border border-white/10 p-6">
-        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">
-              እንኳን ደህና መጡ
-            </p>
-            <h1 className="mt-3">Fast table ordering built for Ethiopian restaurant service.</h1>
-            <p className="mt-3 max-w-2xl text-sm text-textMuted sm:text-base">
-              Browse the menu in Amharic or English, stay ready for weak connections,
-              and place orders with cash-first checkout or local mobile payments.
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">እንኳን ደህና መጡ</p>
+            <h1 className="mt-3">Fast, simple table ordering for your restaurant visit.</h1>
+            <p className="mt-3 text-sm text-textMuted sm:text-base">
+              Open the menu, add dishes, and send your order to the kitchen in a few taps.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -107,67 +95,21 @@ export default function HomeView() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-[1.75rem] border border-white/10 bg-surfaceSoft p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('table')}</p>
-              <p className="mt-2 text-3xl font-black">{tableNumber ? `#${tableNumber}` : '...'}</p>
-              <p className="mt-2 text-sm text-textMuted">
-                {tableNumber ? t('tableReady') : t('scanTableHint')}
-              </p>
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[340px]">
+            <div className="rounded-[1.5rem] border border-white/10 bg-surfaceSoft p-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-textMuted">{t('table')}</p>
+              <p className="mt-2 text-2xl font-black">{tableNumber ? `#${tableNumber}` : '...'}</p>
+              <p className="mt-2 text-xs text-textMuted">{tableNumber ? t('tableReady') : t('scanTableHint')}</p>
             </div>
 
-            <div className="rounded-[1.75rem] border border-white/10 bg-surfaceSoft p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('offlineReady')}</p>
-              <p className="mt-2 text-3xl font-black">{queuedCount}</p>
-              <p className="mt-2 text-sm text-textMuted">
-                {queuedCount
-                  ? t('queuedOrdersReady')
-                  : t('cachedMenuReady')}
+            <div className="rounded-[1.5rem] border border-white/10 bg-surfaceSoft p-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-textMuted">{t('offlineReady')}</p>
+              <p className="mt-2 text-2xl font-black">{queuedCount}</p>
+              <p className="mt-2 text-xs text-textMuted">
+                {queuedCount ? t('queuedOrdersReady') : t('cachedMenuReady')}
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="glass-panel rounded-[1.75rem] border border-white/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <WalletCards size={20} />
-          </div>
-          <h2 className="mt-4 text-lg">Cash-first checkout</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Cash stays front and center, with Telebirr and other digital handoffs available.
-          </p>
-        </div>
-
-        <div className="glass-panel rounded-[1.75rem] border border-white/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <SignalHigh size={20} />
-          </div>
-          <h2 className="mt-4 text-lg">Low-bandwidth friendly</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Cached menu browsing, lighter image loads, and queued orders when the network drops.
-          </p>
-        </div>
-
-        <div className="glass-panel rounded-[1.75rem] border border-white/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Leaf size={20} />
-          </div>
-          <h2 className="mt-4 text-lg">Fasting-aware menu</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Highlight vegetarian and fasting dishes quickly on Wednesdays, Fridays, or Lent.
-          </p>
-        </div>
-
-        <div className="glass-panel rounded-[1.75rem] border border-white/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <PackageCheck size={20} />
-          </div>
-          <h2 className="mt-4 text-lg">Order history</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Keep recent table orders nearby so it is easy to reopen tracking or payment.
-          </p>
         </div>
       </section>
 
@@ -175,9 +117,7 @@ export default function HomeView() {
         <div className="glass-panel rounded-[2rem] border border-white/5 p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
-                {t('quickSettings')}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">{t('quickSettings')}</p>
               <h2 className="mt-2">{t('customizeExperience')}</h2>
             </div>
 
@@ -191,9 +131,7 @@ export default function HomeView() {
                   type="button"
                   onClick={() => setLanguage(option.value)}
                   className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                    language === option.value
-                      ? 'bg-primary text-black'
-                      : 'text-textMuted hover:text-textMain'
+                    language === option.value ? 'bg-primary text-black' : 'text-textMuted hover:text-textMain'
                   }`}
                 >
                   <Languages size={14} />
@@ -224,9 +162,7 @@ export default function HomeView() {
         <div className="glass-panel rounded-[2rem] border border-white/5 p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
-                {t('recentOrders')}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">{t('recentOrders')}</p>
               <h2 className="mt-2">{t('keepTracking')}</h2>
             </div>
             <Link
@@ -244,25 +180,18 @@ export default function HomeView() {
               </div>
             ) : (
               history.map((entry) => (
-                <article
-                  key={entry.localId || entry.orderId}
-                  className="rounded-2xl border border-white/10 bg-surfaceSoft p-4"
-                >
+                <article key={entry.localId || entry.orderId} className="rounded-2xl border border-white/10 bg-surfaceSoft p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold">
-                        {entry.orderId || entry.localId}
-                      </p>
-                      <p className="mt-1 text-xs text-textMuted">
-                        {formatDateTime(entry.createdAt, language)}
-                      </p>
+                      <p className="font-semibold">{entry.orderId || entry.localId}</p>
+                      <p className="mt-1 text-xs text-textMuted">{formatDateTime(entry.createdAt, language)}</p>
                     </div>
                     <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-textMuted">
                       {entry.syncState === 'queued' ? t('queued') : statusLabel(entry.orderStatus || 'Pending')}
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-textMuted">
-                    #{entry.tableNumber} · {entry.paymentMethod} · {formatCurrency(entry.total, language)}
+                    #{entry.tableNumber} · {paymentMethodLabel(entry.paymentMethod)} · {formatCurrency(entry.total, language)}
                   </p>
                 </article>
               ))
@@ -271,39 +200,30 @@ export default function HomeView() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <Link
-          to="/menu"
-          className="glass-panel rounded-[1.75rem] border border-white/5 p-5 transition hover:border-primary/25"
-        >
-          <MenuSquare size={20} className="text-primary" />
-          <h2 className="mt-4 text-lg">{t('browseDishes')}</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Explore fasting dishes, tibs, wats, coffee, and shareable injera sides.
-          </p>
-        </Link>
+      <section className="rounded-[1.75rem] border border-white/10 bg-surfaceSoft p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-textMuted">Staff Access</p>
+            <p className="mt-1 text-sm text-textMuted">For restaurant team use only.</p>
+          </div>
 
-        <Link
-          to="/order"
-          className="glass-panel rounded-[1.75rem] border border-white/5 p-5 transition hover:border-primary/25"
-        >
-          <ShoppingCart size={20} className="text-primary" />
-          <h2 className="mt-4 text-lg">{t('goToCart')}</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Review your tray, pick a payment method, and send the order in a few taps.
-          </p>
-        </Link>
-
-        <Link
-          to="/orders"
-          className="glass-panel rounded-[1.75rem] border border-white/5 p-5 transition hover:border-primary/25"
-        >
-          <Clock3 size={20} className="text-primary" />
-          <h2 className="mt-4 text-lg">{t('trackOrders')}</h2>
-          <p className="mt-2 text-sm text-textMuted">
-            Follow live kitchen progress and reopen pending mobile payments when needed.
-          </p>
-        </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/staff/login"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-textMuted transition hover:bg-white/5 hover:text-textMain"
+            >
+              <Users size={14} />
+              <span>Staff Login</span>
+            </Link>
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-primary transition hover:bg-primary/20"
+            >
+              <Shield size={14} />
+              <span>Admin Login</span>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
