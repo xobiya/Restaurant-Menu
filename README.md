@@ -1,6 +1,8 @@
 # Ethiopian Restaurant Menu & Ordering System
 
-A production-ready full-stack web application for Ethiopian restaurants with:
+## Project Description
+
+This is a production-ready full-stack web application for Ethiopian restaurants, featuring:
 
 - Customer ordering flow (QR/table-first)
 - Real-time kitchen workflow
@@ -9,6 +11,20 @@ A production-ready full-stack web application for Ethiopian restaurants with:
 - Mobile-first React frontend
 
 This project is optimized for local restaurant operations in Ethiopia, including bilingual menu fields (Amharic + English), ETB pricing, cash-first ordering, and Telebirr/Chapa payment flow scaffolding.
+
+## Screenshots
+
+### Home
+
+![Home screen](docs/screenshots/home.png)
+
+### Menu
+
+![Menu screen](docs/screenshots/menu.png)
+
+### Staff Login
+
+![Staff login screen](docs/screenshots/staff-login.png)
 
 ## Product Scope
 
