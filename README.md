@@ -1,129 +1,105 @@
-# Restaurant Menu & Ordering App
+# Ethiopian Restaurant Menu & Ordering App
 
-Production-focused full-stack web app for a single restaurant:
-- Customer flow: QR table link -> menu -> cart -> checkout -> order tracking
-- Admin flow: login -> menu CRUD -> real-time order control -> payment monitoring -> QR generation
+Customer-first full-stack ordering app tailored for Ethiopian restaurant service.
 
-Stack:
+## What Changed
+
+The current frontend now focuses on the customer journey described in the SRS:
+
+- Home screen with Amharic-first UX
+- Ethiopian menu categories and dish metadata
+- Cash-first checkout with Telebirr plus additional local payment labels
+- Offline-friendly menu browsing
+- Queued order sync when connectivity returns
+- Local order history for reopening tracking and payment
+- PWA shell with service worker registration and install manifest
+
+The backend schema is intentionally kept stable to avoid risky database breakage during this upgrade. The API still supports the existing order/payment flow while the client now behaves more like the Ethiopia-optimized product spec.
+
+## Stack
+
 - Frontend: React + Vite + Tailwind + Zustand + Socket.IO client
 - Backend: Express + Prisma + Socket.IO
-- Database: MySQL (Prisma datasource)
-
-## Core Features Implemented
-
-- Menu display with availability filtering for customers
-- Admin menu management (create, update, delete, availability toggle)
-- Order creation with item validation and total calculation
-- Order status lifecycle: `Pending -> Preparing -> Ready -> Completed`
-- ETA calculation from SRS formula:
-  - `Total Time = Σ (prep_time × quantity)`
-- Payment workflow with provider choice (`Chapa`, `Telebirr`)
-- Payment records + webhook handling + order payment status sync
-- Mock payment completion endpoint for local/demo testing
-- Real-time order updates via Socket.IO
-- Table entity support and QR code generation per table
-- Admin JWT authentication
+- Database: MySQL / MariaDB via Prisma
 
 ## Project Structure
 
 ```txt
-client/   # React frontend
-server/   # Express API + Prisma
+client/   Customer PWA frontend
+server/   Express API + Prisma
 ```
 
-## Prerequisites
+## Local Setup
 
-- Node.js 18+
-- MySQL 8+
+### Backend
 
-## Backend Setup
-
-1. Go to backend:
 ```bash
 cd server
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Create `.env` from example:
-```bash
 copy .env.example .env
-```
-
-4. Run migrations and seed:
-```bash
 npm run prisma:generate
 npx prisma migrate dev
 npm run seed
-```
-
-5. Create admin account:
-```bash
-npm run create-admin
-```
-
-6. Start server:
-```bash
 npm run dev
 ```
 
-API runs on `http://localhost:5000` by default.
+Notes:
 
-## Frontend Setup
+- `postinstall` now runs `prisma generate` automatically.
+- `npm run seed` now inserts Ethiopian sample categories and dishes.
+- Running the seed script clears existing demo menu/order/payment data first.
 
-1. Go to frontend:
+### Frontend
+
 ```bash
 cd client
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Create `.env` from example:
-```bash
 copy .env.example .env
-```
-
-4. Start frontend:
-```bash
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173` by default.
+## Main Customer Flow
+
+1. Open the app from `/` or a `/table/:tableNum` QR link.
+2. Browse localized menu categories.
+3. Toggle low-data mode or fasting-first filtering.
+4. Add items to the cart.
+5. Checkout with cash, Telebirr, or another local payment label.
+6. If offline, the order is queued locally and syncs automatically later.
+7. Reopen tracking or payment from the Orders screen.
 
 ## Main API Endpoints
 
 Menu:
+
 - `GET /api/menu`
-- `GET /api/menu/admin` (auth)
-- `POST /api/menu` (auth)
-- `PUT /api/menu/:id` (auth)
-- `DELETE /api/menu/:id` (auth)
+- `GET /api/menu/categories`
 
 Orders:
+
 - `POST /api/orders`
 - `GET /api/orders/:id`
-- `GET /api/orders` (auth)
-- `PATCH /api/orders/:id/status` (auth)
 
 Payments:
+
 - `POST /api/payments/initiate`
-- `POST /api/payments/webhook`
 - `POST /api/payments/mock/complete`
-- `GET /api/payments` (auth)
+- `GET /api/payments/tx/:txRef`
 
-Auth:
-- `POST /api/auth/login`
-- `GET /api/auth/me` (auth)
+Health:
 
-## Default Admin Credentials (local)
+- `GET /api/health`
 
-- Username: `admin`
-- Password: `admin123`
+## Current Gaps vs Full SRS
 
-Change these immediately in production.
+The current implementation moves strongly toward the SRS, but a few production-market items are still future work:
+
+- Real Telebirr / M-Pesa / CBE Birr gateway integrations
+- SMS fallback notifications
+- Ethiopian calendar formatting
+- Dedicated restaurant-operations backend separate from the customer app
+
+## Verification
+
+- `client`: `npm run build`
+- `server`: `npm run dev` and `GET /api/health`

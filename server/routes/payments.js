@@ -4,7 +4,7 @@ const prisma = require('../prismaClient');
 const crypto = require('crypto');
 const verifyJWT = require('../middleware/authMiddleware');
 
-const PAYMENT_PROVIDERS = ['Chapa', 'Telebirr'];
+const PAYMENT_PROVIDERS = ['Cash', 'Telebirr', 'M-Pesa', 'CBE Birr', 'HelloCash', 'Card', 'Chapa'];
 const SUCCESS_STATUSES = new Set(['success', 'succeeded', 'paid', 'completed']);
 const FAILED_STATUSES = new Set(['failed', 'cancelled', 'canceled', 'error']);
 const PENDING_STATUSES = new Set(['pending', 'processing', 'initiated']);
@@ -15,6 +15,9 @@ const normalizeProvider = (provider) => {
   const normalized = String(provider || '').trim().toLowerCase();
   if (normalized === 'chapa') return 'Chapa';
   if (normalized === 'telebirr') return 'Telebirr';
+  if (['m-pesa', 'mpesa', 'cbe birr', 'hellocash', 'card', 'mobile pay'].includes(normalized)) {
+    return 'Chapa';
+  }
   return null;
 };
 
@@ -78,7 +81,8 @@ const syncOrderWithPayment = async (payment, io) => {
 // Calls Chapa/Telebirr to start a transaction
 router.post('/initiate', async (req, res) => {
   const { orderId, provider, customerInfo = {} } = req.body;
-  const normalizedProvider = normalizeProvider(provider || 'Chapa');
+  const requestedProvider = String(provider || 'Chapa').trim();
+  const normalizedProvider = normalizeProvider(requestedProvider || 'Chapa');
 
   if (!orderId) {
     return res.status(400).json({ error: 'orderId is required' });
@@ -119,6 +123,7 @@ router.post('/initiate', async (req, res) => {
         raw_payload: {
           type: 'initiate',
           provider: normalizedProvider,
+          requested_provider: requestedProvider,
           customer: customerInfo,
         },
       },
@@ -133,6 +138,7 @@ router.post('/initiate', async (req, res) => {
       paymentId: payment.id,
       tx_ref: payment.tx_ref,
       provider: payment.provider,
+      requestedProvider,
       amount: payment.amount,
       currency: payment.currency,
       checkoutUrl: payment.checkout_url,

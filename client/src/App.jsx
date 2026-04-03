@@ -1,12 +1,13 @@
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import GlassNav from './components/common/GlassNav';
+import OfflineBanner from './components/common/OfflineBanner';
+import SyncManager from './components/common/SyncManager';
+import HomeView from './pages/Customer/HomeView';
 import MenuView from './pages/Customer/MenuView';
 import CartView from './pages/Customer/CartView';
 import TrackView from './pages/Customer/TrackView';
 import PaymentView from './pages/Customer/PaymentView';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import AdminLogin from './pages/Admin/AdminLogin';
 
 function TableRedirect() {
   const navigate = useNavigate();
@@ -23,43 +24,30 @@ function TableRedirect() {
   return <div>Loading Table Context...</div>;
 }
 
-function RequireAdmin({ children }) {
-  const token = localStorage.getItem('admin_token');
-  if (!token) {
-    return <Navigate to="/admin/login" replace />;
-  }
-  return children;
-}
-
 function App() {
-  const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith('/admin');
-
   return (
-    <div className="min-h-screen bg-background text-textMain pb-24">
-      <Routes>
-        <Route path="/table/:tableNum" element={<TableRedirect />} />
-        <Route path="/" element={<Navigate to="/menu" replace />} />
-        <Route path="/menu" element={<MenuView />} />
-        <Route path="/order" element={<CartView />} />
-        <Route path="/cart" element={<Navigate to="/order" replace />} />
-        <Route path="/track" element={<TrackView />} />
-        <Route path="/track/:orderId" element={<TrackView />} />
-        <Route path="/payment/:txRef" element={<PaymentView />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin/*"
-          element={
-            <RequireAdmin>
-              <AdminDashboard />
-            </RequireAdmin>
-          }
-        />
-      </Routes>
+    <SyncManager>
+      {({ syncing, recentlySyncedCount }) => (
+        <div className="min-h-screen bg-background text-textMain pb-24">
+          <OfflineBanner syncing={syncing} recentlySyncedCount={recentlySyncedCount} />
 
-      {/* Hide GlassNav on Admin routes */}
-      {!isAdminRoute && <GlassNav />}
-    </div>
+          <Routes>
+            <Route path="/table/:tableNum" element={<TableRedirect />} />
+            <Route path="/" element={<HomeView />} />
+            <Route path="/menu" element={<MenuView />} />
+            <Route path="/order" element={<CartView />} />
+            <Route path="/cart" element={<Navigate to="/order" replace />} />
+            <Route path="/orders" element={<TrackView />} />
+            <Route path="/orders/:orderId" element={<TrackView />} />
+            <Route path="/track" element={<Navigate to="/orders" replace />} />
+            <Route path="/track/:orderId" element={<TrackView />} />
+            <Route path="/payment/:txRef" element={<PaymentView />} />
+          </Routes>
+
+          <GlassNav />
+        </div>
+      )}
+    </SyncManager>
   );
 }
 

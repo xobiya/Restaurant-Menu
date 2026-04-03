@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline Menu</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0f1113;
+        color: #f6f1e8;
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+
+      main {
+        width: min(90vw, 32rem);
+        padding: 2rem;
+        border-radius: 1.5rem;
+        background: #181c20;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      h1 {
+        margin: 0 0 1rem;
+        font-size: clamp(1.8rem, 5vw, 2.6rem);
+      }
+
+      p {
+        color: #b8ad9f;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You are offline.</h1>
+      <p>
+        The restaurant app can still reopen with cached pages and menu content.
+        Once your connection returns, queued orders will sync automatically.
+      </p>
+    </main>
+  </body>
+  </html>
