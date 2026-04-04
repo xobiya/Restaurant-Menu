@@ -258,6 +258,7 @@ Base URL: `/api`
 ### Payments
 
 - `POST /payments/chapa/initialize`
+
 - `POST /payments/telebirr/initialize`
 - `POST /payments/initiate` (generic)
 - `POST /payments/mock/complete` (development helper)
@@ -275,6 +276,42 @@ Server emits real-time events for dashboard and customer tracking:
 - `orderUpdated`
 - `orderStatusUpdate:<orderId>`
 - `paymentUpdated`
+
+## Deployment (Railway + Vercel)
+
+### Railway (Backend)
+
+- Set service root to `server`
+- Start command: `npm start`
+- Required variables:
+  - `DATABASE_URL`
+  - `JWT_SECRET`
+  - `FRONTEND_URL` (your Vercel app URL, comma-separated if multiple domains)
+
+### Vercel (Frontend)
+
+- Set project root to `client`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Required variable:
+  - `VITE_API_BASE_URL=https://<railway-domain>/api`
+
+### CORS origin note
+
+The backend normalizes origins by trimming trailing `/` so values such as
+`https://restaurant-menu-beta-eight.vercel.app/` and
+`https://restaurant-menu-beta-eight.vercel.app` are treated the same.
+
+## GitHub Actions automation
+
+This repository includes `.github/workflows/ci-cd.yml` that:
+
+1. Installs dependencies for `server` and `client`
+2. Validates Prisma schema (`npx prisma validate`)
+3. Builds the client (`npm run build`)
+4. On push to `main`, optionally triggers deploy hooks if these GitHub secrets are set:
+   - `RAILWAY_DEPLOY_HOOK_URL`
+   - `VERCEL_DEPLOY_HOOK_URL`
 
 ## Available Scripts
 
