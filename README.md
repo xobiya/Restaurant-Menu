@@ -293,7 +293,6 @@ Server emits real-time events for dashboard and customer tracking:
 - Set project root to `client`
 - Build command: `npm run build`
 - Output directory: `dist`
-- SPA routing is handled by `client/vercel.json` rewrite to `index.html` (so `/menu`, `/order`, etc. resolve correctly on refresh/direct hit)
 - Required variable:
   - `VITE_API_BASE_URL=https://<railway-domain>/api`
 
