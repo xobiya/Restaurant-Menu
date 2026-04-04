@@ -102,6 +102,13 @@ Required:
 - `DATABASE_URL` (MySQL connection string)
 - `JWT_SECRET`
 
+Alternative (if `DATABASE_URL` is not set):
+- `MYSQLHOST`
+- `MYSQLPORT`
+- `MYSQLUSER`
+- `MYSQLPASSWORD`
+- `MYSQLDATABASE`
+
 Common:
 
 - `PORT` (default `5000`)
