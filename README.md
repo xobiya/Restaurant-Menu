@@ -258,6 +258,7 @@ Base URL: `/api`
 ### Payments
 
 - `POST /payments/chapa/initialize`
+
 - `POST /payments/telebirr/initialize`
 - `POST /payments/initiate` (generic)
 - `POST /payments/mock/complete` (development helper)
@@ -276,6 +277,43 @@ Server emits real-time events for dashboard and customer tracking:
 - `orderStatusUpdate:<orderId>`
 - `paymentUpdated`
 
+## Deployment (Railway + Vercel)
+
+### Railway (Backend)
+
+- Set service root to `server`
+- Start command: `npm start`
+- Required variables:
+  - `DATABASE_URL`
+  - `JWT_SECRET`
+  - `FRONTEND_URL` (your Vercel app URL, comma-separated if multiple domains)
+
+### Vercel (Frontend)
+
+- Set project root to `client`
+- Build command: `npm run build`
+- Output directory: `dist`
+- SPA routing is handled by `client/vercel.json` rewrite to `index.html` (so `/menu`, `/order`, etc. resolve correctly on refresh/direct hit)
+- Required variable:
+  - `VITE_API_BASE_URL=https://<railway-domain>/api`
+
+### CORS origin note
+
+The backend normalizes origins by trimming trailing `/` so values such as
+`https://restaurant-menu-beta-eight.vercel.app/` and
+`https://restaurant-menu-beta-eight.vercel.app` are treated the same.
+
+## GitHub Actions automation
+
+This repository includes `.github/workflows/ci-cd.yml` that:
+
+1. Installs dependencies for `server` and `client`
+2. Validates Prisma schema (`npx prisma validate`)
+3. Builds the client (`npm run build`)
+4. On push to `main`, optionally triggers deploy hooks if these GitHub secrets are set:
+   - `RAILWAY_DEPLOY_HOOK_URL`
+   - `VERCEL_DEPLOY_HOOK_URL`
+
 ## Available Scripts
 
 ### Backend (`server/package.json`)
@@ -286,6 +324,7 @@ Server emits real-time events for dashboard and customer tracking:
 - `npm run prisma:migrate` - Prisma migrate dev
 - `npm run prisma:seed` - Prisma seed command
 - `npm run seed` - run custom seed script
+- `npm run seed:foods` - seed ~20 food menu items with image URLs
 - `npm run create-admin` - upsert admin account
 - `npm run test-db` - test database connectivity
 

@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const dotenv = require('dotenv');
 
 // Load env variables
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const http = require('http');
 const { Server } = require('socket.io');
@@ -12,19 +12,21 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 
+const normalizeOrigin = (origin = '') => origin.replace(/\/+$/, '').trim();
+
 const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-];
+].map(normalizeOrigin);
 
 const envOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
 const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envOrigins])];
 
-const isOriginAllowed = (origin) => !origin || allowedOrigins.includes(origin);
+const isOriginAllowed = (origin) => !origin || allowedOrigins.includes(normalizeOrigin(origin));
 
 const io = new Server(server, {
   cors: {
