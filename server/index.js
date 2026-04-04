@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const dotenv = require('dotenv');
 
 // Load env variables
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const http = require('http');
 const { Server } = require('socket.io');
