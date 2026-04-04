@@ -293,6 +293,7 @@ Server emits real-time events for dashboard and customer tracking:
 - Set project root to `client`
 - Build command: `npm run build`
 - Output directory: `dist`
+- SPA routing is handled by `client/vercel.json` rewrite to `index.html` (so `/menu`, `/order`, etc. resolve correctly on refresh/direct hit)
 - Required variable:
   - `VITE_API_BASE_URL=https://<railway-domain>/api`
 
@@ -323,6 +324,7 @@ This repository includes `.github/workflows/ci-cd.yml` that:
 - `npm run prisma:migrate` - Prisma migrate dev
 - `npm run prisma:seed` - Prisma seed command
 - `npm run seed` - run custom seed script
+- `npm run seed:foods` - seed ~20 food menu items with image URLs
 - `npm run create-admin` - upsert admin account
 - `npm run test-db` - test database connectivity
 
