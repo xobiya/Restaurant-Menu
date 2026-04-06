@@ -62,6 +62,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, '/offline.html'));
