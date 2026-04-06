@@ -14,10 +14,10 @@ const buildDatabaseUrlFromParts = () => {
   return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
 };
 
-const databaseUrl = clean(process.env.DATABASE_URL) || buildDatabaseUrlFromParts();
+const databaseUrl = clean(process.env.DATABASE_URL) || clean(process.env.MYSQL_URL) || buildDatabaseUrlFromParts();
 
 if (!databaseUrl) {
-  throw new Error('DATABASE_URL is not set.');
+  throw new Error('DATABASE_URL or MYSQL_URL is not set.');
 }
 
 const adapter = new PrismaMariaDb(databaseUrl);
