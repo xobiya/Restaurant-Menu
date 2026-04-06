@@ -86,20 +86,20 @@ export default function PaymentView() {
     payment?.provider;
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+    <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-4 lg:gap-6 px-4 pb-28 pt-4 sm:px-6 lg:pt-6 lg:px-8">
       <Link
         to={payment?.order?.id ? `/track/${encodeURIComponent(payment.order.id)}` : '/order'}
-        className="inline-flex w-fit items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-textMuted transition hover:text-textMain"
+        className="inline-flex w-fit items-center gap-2 rounded-xl lg:rounded-2xl border border-white/10 px-3 py-2 lg:px-4 lg:py-3 text-xs lg:text-sm font-semibold text-textMuted transition hover:text-textMain"
       >
         <ArrowLeft size={16} />
         <span>{t('back')}</span>
       </Link>
 
-      <section className="glass-panel rounded-[2rem] border border-white/10 p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+      <section className="glass-panel rounded-2xl lg:rounded-[2rem] border border-white/10 p-5 lg:p-6 text-center sm:text-left">
+        <p className="text-[10px] lg:text-xs font-semibold uppercase tracking-[0.3em] text-primary">
           {t('checkout')}
         </p>
-        <h1 className="mt-3">Complete the payment and return to live tracking.</h1>
+        <h1 className="mt-2 lg:mt-3 text-xl lg:text-2xl font-bold">Complete the payment and return to live tracking.</h1>
       </section>
 
       {notice ? (
@@ -116,38 +116,38 @@ export default function PaymentView() {
       ) : null}
 
       {loading ? (
-        <div className="glass-panel flex items-center justify-center gap-3 rounded-[2rem] p-12 text-textMuted">
-          <Loader2 className="animate-spin" />
+        <div className="glass-panel flex flex-col sm:flex-row items-center justify-center gap-3 rounded-2xl lg:rounded-[2rem] p-10 lg:p-12 text-sm lg:text-base text-textMuted">
+          <Loader2 className="animate-spin h-6 w-6 lg:h-8 lg:w-8" />
           <span>{t('loadingPayment')}</span>
         </div>
       ) : payment ? (
-        <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-          <section className="glass-panel rounded-[2rem] border border-white/5 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Transaction</p>
-                <h2 className="mt-2 font-mono text-lg">{payment.tx_ref}</h2>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+          <section className="glass-panel rounded-2xl lg:rounded-[2rem] border border-white/5 p-5 lg:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] lg:text-xs uppercase tracking-[0.25em] text-textMuted">Transaction</p>
+                <h2 className="mt-1 lg:mt-2 font-mono text-sm lg:text-lg truncate max-w-full">{payment.tx_ref}</h2>
               </div>
 
-              <span className={`rounded-full border px-3 py-2 text-sm font-semibold ${getStatusClass(payment.status)}`}>
+              <span className={`rounded-full border px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-semibold shrink-0 ${getStatusClass(payment.status)}`}>
                 {statusLabel(payment.status === 'Pending' ? 'PendingPayment' : payment.status)}
               </span>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-surfaceSoft p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-textMuted">{t('amount')}</p>
-                <p className="mt-2 text-2xl font-bold">
+            <div className="mt-5 lg:mt-6 grid gap-3 lg:gap-4 sm:grid-cols-2">
+              <div className="rounded-xl lg:rounded-2xl border border-white/10 bg-surfaceSoft p-3 lg:p-4">
+                <p className="text-[10px] lg:text-xs uppercase tracking-[0.25em] text-textMuted">{t('amount')}</p>
+                <p className="mt-1 lg:mt-2 text-xl lg:text-2xl font-bold">
                   {formatCurrency(payment.amount, language)}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-surfaceSoft p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Provider</p>
-                <p className="mt-2 text-2xl font-bold">{paymentMethodLabel(displayProvider)}</p>
+              <div className="rounded-xl lg:rounded-2xl border border-white/10 bg-surfaceSoft p-3 lg:p-4">
+                <p className="text-[10px] lg:text-xs uppercase tracking-[0.25em] text-textMuted">Provider</p>
+                <p className="mt-1 lg:mt-2 text-xl lg:text-2xl font-bold truncate">{paymentMethodLabel(displayProvider)}</p>
               </div>
             </div>
 
-            <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-surfaceSoft p-4 text-sm">
+            <div className="mt-5 lg:mt-6 space-y-2 lg:space-y-3 rounded-xl lg:rounded-2xl border border-white/10 bg-surfaceSoft p-3 lg:p-4 text-xs lg:text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-textMuted">{t('status')}</span>
                 <span className="font-semibold">
@@ -165,12 +165,12 @@ export default function PaymentView() {
             </div>
           </section>
 
-          <aside className="space-y-4">
-            <section className="glass-panel rounded-[2rem] border border-white/5 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
+          <aside className="space-y-4 lg:space-y-6">
+            <section className="glass-panel rounded-2xl lg:rounded-[2rem] border border-white/5 p-5 lg:p-6">
+              <p className="text-[10px] lg:text-xs font-semibold uppercase tracking-[0.25em] text-textMuted">
                 Order summary
               </p>
-              <div className="mt-4 space-y-3 text-sm">
+              <div className="mt-3 lg:mt-4 space-y-2 lg:space-y-3 text-xs lg:text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-textMuted">{t('table')}</span>
                   <span className="font-semibold">
@@ -201,14 +201,14 @@ export default function PaymentView() {
             </section>
 
             {payment.status === 'Pending' ? (
-              <section className="glass-panel rounded-[2rem] border border-white/5 p-6">
+              <section className="glass-panel rounded-2xl lg:rounded-[2rem] border border-white/5 p-5 lg:p-6">
                 <div className="space-y-3">
                   {payment.checkout_url && typeof payment.checkout_url === 'string' && !payment.checkout_url.startsWith(window.location.origin) ? (
                     <a
                       href={payment.checkout_url}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-semibold text-black transition hover:bg-primaryDark"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl lg:rounded-2xl bg-primary px-3 py-3 lg:px-4 lg:py-4 text-xs lg:text-sm font-semibold text-black transition hover:bg-primaryDark"
                     >
-                      <CreditCard size={18} />
+                      <CreditCard size={18} className="h-4 w-4 lg:h-4.5 lg:w-4.5" />
                       <span>Proceed to Pay</span>
                     </a>
                   ) : (
@@ -217,12 +217,12 @@ export default function PaymentView() {
                         type="button"
                         onClick={() => handleMockStatusUpdate('success')}
                         disabled={Boolean(actionLoading)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-semibold text-black transition hover:bg-primaryDark disabled:cursor-not-allowed disabled:bg-primary/60"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl lg:rounded-2xl bg-primary px-3 py-3 lg:px-4 lg:py-4 text-xs lg:text-sm font-semibold text-black transition hover:bg-primaryDark disabled:cursor-not-allowed disabled:bg-primary/60"
                       >
                         {actionLoading === 'success' ? (
-                          <Loader2 size={18} className="animate-spin" />
+                          <Loader2 size={18} className="animate-spin h-4 w-4 lg:h-4.5 lg:w-4.5" />
                         ) : (
-                          <CheckCircle2 size={18} />
+                          <CheckCircle2 size={18} className="h-4 w-4 lg:h-4.5 lg:w-4.5" />
                         )}
                         <span>{t('completePayment')}</span>
                       </button>
@@ -231,12 +231,12 @@ export default function PaymentView() {
                         type="button"
                         onClick={() => handleMockStatusUpdate('failed')}
                         disabled={Boolean(actionLoading)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl lg:rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-3 lg:px-4 lg:py-4 text-xs lg:text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {actionLoading === 'failed' ? (
-                          <Loader2 size={18} className="animate-spin" />
+                          <Loader2 size={18} className="animate-spin h-4 w-4 lg:h-4.5 lg:w-4.5" />
                         ) : (
-                          <XCircle size={18} />
+                          <XCircle size={18} className="h-4 w-4 lg:h-4.5 lg:w-4.5" />
                         )}
                         <span>{t('markFailed')}</span>
                       </button>
