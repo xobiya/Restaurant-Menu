@@ -3,6 +3,25 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const clean = (value?: string) => (value || "").trim().replace(/^['"]|['"]$/g, "");
+
+const buildDatabaseUrlFromParts = () => {
+  const host = clean(process.env.MYSQLHOST);
+  const port = clean(process.env.MYSQLPORT || "3306");
+  const user = clean(process.env.MYSQLUSER);
+  const password = clean(process.env.MYSQLPASSWORD);
+  const database = clean(process.env.MYSQLDATABASE);
+
+  if (!host || !user || !database) return "";
+  return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+};
+
+const getDatabaseUrl = () => {
+  const fromDatabaseUrl = clean(process.env.DATABASE_URL);
+  if (fromDatabaseUrl) return fromDatabaseUrl;
+  return buildDatabaseUrlFromParts();
+};
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -10,6 +29,6 @@ export default defineConfig({
     seed: "node ./prisma/seed.js",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: getDatabaseUrl(),
   },
 });
