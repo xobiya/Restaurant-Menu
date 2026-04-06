@@ -203,33 +203,45 @@ export default function PaymentView() {
             {payment.status === 'Pending' ? (
               <section className="glass-panel rounded-[2rem] border border-white/5 p-6">
                 <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => handleMockStatusUpdate('success')}
-                    disabled={Boolean(actionLoading)}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-semibold text-black transition hover:bg-primaryDark disabled:cursor-not-allowed disabled:bg-primary/60"
-                  >
-                    {actionLoading === 'success' ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <CheckCircle2 size={18} />
-                    )}
-                    <span>{t('completePayment')}</span>
-                  </button>
+                  {payment.checkout_url && typeof payment.checkout_url === 'string' && !payment.checkout_url.startsWith(window.location.origin) ? (
+                    <a
+                      href={payment.checkout_url}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-semibold text-black transition hover:bg-primaryDark"
+                    >
+                      <CreditCard size={18} />
+                      <span>Proceed to Pay</span>
+                    </a>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleMockStatusUpdate('success')}
+                        disabled={Boolean(actionLoading)}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-semibold text-black transition hover:bg-primaryDark disabled:cursor-not-allowed disabled:bg-primary/60"
+                      >
+                        {actionLoading === 'success' ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={18} />
+                        )}
+                        <span>{t('completePayment')}</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleMockStatusUpdate('failed')}
-                    disabled={Boolean(actionLoading)}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {actionLoading === 'failed' ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <XCircle size={18} />
-                    )}
-                    <span>{t('markFailed')}</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMockStatusUpdate('failed')}
+                        disabled={Boolean(actionLoading)}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {actionLoading === 'failed' ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <XCircle size={18} />
+                        )}
+                        <span>{t('markFailed')}</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </section>
             ) : null}

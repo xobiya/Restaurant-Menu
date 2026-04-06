@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const express = require('express');
+const axios = require('axios');
 const prisma = require('../prismaClient');
 const verifyJWT = require('../middleware/authMiddleware');
 const requireRole = require('../middleware/requireRole');
@@ -11,7 +12,16 @@ const FAILED_STATUSES = new Set(['failed', 'cancelled', 'canceled', 'error']);
 const PENDING_STATUSES = new Set(['pending', 'processing', 'initiated']);
 const DIGITAL_PROVIDERS = ['Chapa', 'Telebirr'];
 
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const getFrontendUrl = (req) => {
+  const envUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const allowed = envUrl.split(',').map((u) => u.trim());
+  if (req && req.headers && req.headers.origin) {
+    if (allowed.includes(req.headers.origin)) {
+      return req.headers.origin;
+    }
+  }
+  return allowed[0] || 'http://localhost:5173';
+};
 
 const normalizeProvider = (provider) => {
   const normalized = String(provider || '').trim().toLowerCase();
@@ -186,7 +196,50 @@ const initializePayment = async (req, res, forcedProvider) => {
     }
 
     const txRef = createTxRef(order.id, normalizedProvider);
-    const checkoutUrl = `${frontendUrl}/payment/${encodeURIComponent(txRef)}`;
+    const resolvedFrontendUrl = getFrontendUrl(req);
+    let checkoutUrl = `${resolvedFrontendUrl}/payment/${encodeURIComponent(txRef)}`;
+
+    if (normalizedProvider === 'Chapa' && process.env.CHAPA_SECRET_KEY) {
+      try {
+        const response = await axios.post(
+          'https://api.chapa.co/v1/transaction/initialize',
+          {
+            amount: Number(order.total_amount),
+            currency: 'ETB',
+            email: customerInfo.email || 'guest@gmail.com',
+            first_name: customerInfo.first_name || customerInfo.name || 'Guest',
+            last_name: customerInfo.last_name || 'Customer',
+            tx_ref: txRef,
+            callback_url: `${process.env.API_URL || 'http://localhost:3000'}/api/payments/webhook`,
+            return_url: checkoutUrl,
+            customization: {
+              title: 'Restaurant Order Payment',
+              description: `Payment for order #${order.id}`,
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+            },
+          }
+        );
+
+        if (response.data && response.data.status === 'success') {
+          checkoutUrl = response.data.data.checkout_url;
+        }
+      } catch (error) {
+        console.error('Chapa initialization failed:', error.response?.data || error.message);
+      }
+    } else if (normalizedProvider === 'Telebirr' && process.env.TELEBIRR_KEY) {
+      // Future Telebirr implementation goes here
+      try {
+        console.log('Telebirr payment initialization placeholder');
+        // const response = await axios.post('TELEBIRR_URL', ... )
+        // checkoutUrl = response.data.checkout_url;
+      } catch (error) {
+        console.error('Telebirr initialization failed:', error.response?.data || error.message);
+      }
+    }
 
     const payment = await prisma.payment.create({
       data: {
@@ -249,7 +302,62 @@ const initializePayment = async (req, res, forcedProvider) => {
 };
 
 const processWebhook = async (req, res, forcedProvider) => {
-  const { tx_ref, status, provider, gateway_reference } = req.body;
+  const { tx_ref, status, provider, gateway_reference, event } = req.body;
+
+  // Handles Chapa webhook
+  if (forcedProvider === 'Chapa' && event === 'charge.success') {
+    const chapaSecret = process.env.CHAPA_SECRET_KEY;
+    if (chapaSecret) {
+      const chapaSignature = req.headers['x-chapa-signature'] || req.headers['chapa-signature'];
+      const hash = crypto
+        .createHmac('sha256', process.env.CHAPA_WEBHOOK_SECRET || chapaSecret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+
+      if (chapaSignature !== hash && process.env.CHAPA_WEBHOOK_SECRET) {
+        console.warn('Invalid Chapa webhook signature');
+        return res.status(401).json({ error: 'Invalid webhook signature' });
+      }
+
+      try {
+        const verifyRes = await axios.get(`https://api.chapa.co/v1/transaction/verify/${tx_ref}`, {
+          headers: {
+            Authorization: `Bearer ${chapaSecret}`,
+          },
+        });
+
+        if (verifyRes.data && verifyRes.data.status === 'success') {
+          const payment = await prisma.payment.findUnique({
+            where: { tx_ref },
+          });
+
+          if (payment) {
+            const updatedPayment = await prisma.payment.update({
+              where: { id: payment.id },
+              data: {
+                status: 'Paid',
+                gateway_reference: verifyRes.data.data.reference || gateway_reference,
+                raw_payload: {
+                  ...(payment.raw_payload || {}),
+                  type: 'webhook_verified',
+                  provider: 'Chapa',
+                  chapa_status: verifyRes.data.data.status,
+                  payload: req.body,
+                },
+              },
+            });
+            await syncOrderWithPayment(updatedPayment, req.io);
+            return res.status(200).send('Chapa webhook verified and processed');
+          }
+        } else {
+           console.warn(`Chapa verification failed for tx_ref: ${tx_ref}`);
+        }
+      } catch (error) {
+        console.error('Chapa verification request failed:', error.response?.data || error.message);
+        return res.status(500).send('Chapa verification error');
+      }
+    }
+  }
 
   if (!tx_ref || !status) {
     return res.status(400).json({ error: 'Missing tx_ref or status' });

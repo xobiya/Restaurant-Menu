@@ -40,7 +40,6 @@ export default function CartView() {
   const [tableInput, setTableInputState] = useState(() => String(getTableNumber() || ''));
   const [savedTable, setSavedTable] = useState(() => getTableNumber());
   const [customerName, setCustomerName] = useState(profile.customerName || '');
-  const [phone, setPhone] = useState(profile.phone || '');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -79,7 +78,6 @@ export default function CartView() {
     try {
       const draft = buildOrderDraft({
         customerName,
-        phone,
         tableNumber: savedTable,
         items: cartItems,
         paymentMethod,
@@ -238,12 +236,6 @@ export default function CartView() {
                 value={customerName}
                 onChange={(event) => setCustomerName(event.target.value)}
                 placeholder={t('customerNamePlaceholder')}
-                className="premium-input"
-              />
-              <input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder={t('phonePlaceholder')}
                 className="premium-input"
               />
             </div>
