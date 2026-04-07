@@ -1,0 +1,12 @@
+{
+  "name": "restaurant-menu-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root package for Railway deployment",
+  "scripts": {
+    "start": "bash ./start.sh"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
