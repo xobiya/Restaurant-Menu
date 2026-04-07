@@ -11,7 +11,7 @@ const buildDatabaseUrlFromParts = () => {
   const database = clean(process.env.MYSQLDATABASE);
 
   if (!host || !user || !database) return '';
-  return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+  return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}?allowPublicKeyRetrieval=true`;
 };
 
 const databaseUrl = clean(process.env.DATABASE_URL) || clean(process.env.MYSQL_URL) || buildDatabaseUrlFromParts();
