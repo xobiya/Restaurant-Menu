@@ -1,4 +1,4 @@
-import { Clock3, Languages, Leaf, MenuSquare, Shield, SignalHigh, Users } from 'lucide-react';
+import { Clock3, Languages, Leaf, MenuSquare, Shield, SignalHigh, Sparkles, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -36,6 +36,43 @@ function PreferenceToggle({ active, label, helper, onClick, icon: Icon }) {
   );
 }
 
+function PulseMetric({ label, value, helper }) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/10 bg-surfaceSoft/90 p-4 backdrop-blur-sm">
+      <p className="text-[11px] uppercase tracking-[0.25em] text-textMuted">{label}</p>
+      <p className="mt-2 text-2xl font-black">{value}</p>
+      <p className="mt-2 text-xs text-textMuted">{helper}</p>
+    </div>
+  );
+}
+
+function QuickAction({ to, icon: Icon, title, helper, tone = 'default' }) {
+  return (
+    <Link
+      to={to}
+      className={`group rounded-[1.25rem] border p-4 transition ${
+        tone === 'highlight'
+          ? 'border-primary/35 bg-primary/10 hover:bg-primary/20'
+          : 'border-white/10 bg-surfaceSoft hover:border-white/20'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+            tone === 'highlight' ? 'bg-primary text-black' : 'bg-white/5 text-textMain'
+          }`}
+        >
+          <Icon size={18} />
+        </div>
+        <div>
+          <p className="font-semibold">{title}</p>
+          <p className="mt-1 text-xs text-textMuted">{helper}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function HomeView() {
   const { language, setLanguage, t, statusLabel, paymentMethodLabel } = useLocale();
   const [preferences, setPreferences] = useState(getCustomerPreferences);
@@ -68,46 +105,51 @@ export default function HomeView() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
-      <section className="glass-panel overflow-hidden rounded-[2rem] border border-white/10 p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">እንኳን ደህና መጡ</p>
-            <h1 className="mt-3">Fast, simple table ordering for your restaurant visit.</h1>
-            <p className="mt-3 text-sm text-textMuted sm:text-base">
-              Open the menu, add dishes, and send your order to the kitchen in a few taps.
-            </p>
+      <section className="glass-panel relative overflow-hidden rounded-[2rem] border border-white/10 p-6 sm:p-8">
+        <div className="pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                to="/menu"
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-black transition hover:bg-primaryDark"
-              >
-                <MenuSquare size={18} />
-                <span>{t('viewMenu')}</span>
-              </Link>
-              <Link
-                to="/orders"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-5 py-3 text-sm font-semibold text-textMain transition hover:bg-white/5"
-              >
-                <Clock3 size={18} />
-                <span>{t('orders')}</span>
-              </Link>
-            </div>
+        <div className="relative z-10 flex flex-col gap-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              <Sparkles size={14} />
+              እንኳን ደህና መጡ
+            </span>
+            <span className="rounded-full border border-white/10 bg-surfaceSoft px-3 py-1 text-xs text-textMuted">
+              {t('offlineReady')}
+            </span>
           </div>
 
-          <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[340px]">
-            <div className="rounded-[1.5rem] border border-white/10 bg-surfaceSoft p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-textMuted">{t('table')}</p>
-              <p className="mt-2 text-2xl font-black">{tableNumber ? `#${tableNumber}` : '...'}</p>
-              <p className="mt-2 text-xs text-textMuted">{tableNumber ? t('tableReady') : t('scanTableHint')}</p>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+            <div className="max-w-3xl">
+              <h1 className="mt-1">Fast, simple table ordering for your restaurant visit.</h1>
+              <p className="mt-3 text-sm text-textMuted sm:text-base">
+                Open the menu, add dishes, and send your order to the kitchen in a few taps.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <QuickAction
+                  to="/menu"
+                  icon={MenuSquare}
+                  title={t('viewMenu')}
+                  helper="Browse dishes, drinks, and combos."
+                  tone="highlight"
+                />
+                <QuickAction to="/orders" icon={Clock3} title={t('orders')} helper={t('keepTracking')} />
+              </div>
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/10 bg-surfaceSoft p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-textMuted">{t('offlineReady')}</p>
-              <p className="mt-2 text-2xl font-black">{queuedCount}</p>
-              <p className="mt-2 text-xs text-textMuted">
-                {queuedCount ? t('queuedOrdersReady') : t('cachedMenuReady')}
-              </p>
+            <div className="grid w-full gap-3">
+              <PulseMetric
+                label={t('table')}
+                value={tableNumber ? `#${tableNumber}` : '...'}
+                helper={tableNumber ? t('tableReady') : t('scanTableHint')}
+              />
+              <PulseMetric
+                label={t('offlineReady')}
+                value={queuedCount}
+                helper={queuedCount ? t('queuedOrdersReady') : t('cachedMenuReady')}
+              />
             </div>
           </div>
         </div>
