@@ -10,8 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "seed": "node prisma/seed.js",
     "seed:foods": "node prisma/seed.food-images.js",
+     "seed": "node scripts/seed.food-images.js",
     "create-admin": "node scripts/createAdmin.js",
     "test-db": "node test-db.js"
   },
