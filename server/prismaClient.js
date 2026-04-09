@@ -1,40 +1,39 @@
 const { PrismaClient } = require('@prisma/client');
 const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
 const mariadb = require('mariadb');
+const dotenv = require('dotenv');
 
-const clean = (value = '') => String(value).trim().replace(/^['"]|['"]$/g, '');
+dotenv.config({ override: true });
 
-const host = clean(process.env.MYSQLHOST) || clean(process.env.DB_HOST);
-const port = clean(process.env.MYSQLPORT || process.env.DB_PORT || '3306');
-const user = clean(process.env.MYSQLUSER) || clean(process.env.DB_USER);
-const password = clean(process.env.MYSQLPASSWORD) || clean(process.env.DB_PASSWORD);
-const database = clean(process.env.MYSQLDATABASE) || clean(process.env.DB_NAME);
+const clean = (value = '') => String(value || '').trim().replace(/^['"]|['"]$/g, '');
 
-let pool;
+let rawUrl = clean(process.env.DATABASE_URL) || clean(process.env.MYSQL_URL);
 
-// Railway MySQL or manual env variables
-if (host && user && database) {
-  pool = mariadb.createPool({
-    host,
-    port: parseInt(port, 10),
-    user,
-    password,
-    database,
-    connectionLimit: 5,
-  });
-} else {
-  // Fallback to local DATABASE_URL (mostly for local development)
-  let databaseUrl = clean(process.env.DATABASE_URL) || clean(process.env.MYSQL_URL);
-  if (!databaseUrl) {
-    throw new Error('Database credentials (MYSQLHOST/MYSQLUSER/etc) or DATABASE_URL not set.');
+if (!rawUrl) {
+  const host = clean(process.env.MYSQLHOST);
+  const user = clean(process.env.MYSQLUSER);
+  const pwd = clean(process.env.MYSQLPASSWORD);
+  const db = clean(process.env.MYSQLDATABASE);
+  const port = clean(process.env.MYSQLPORT || '3306');
+  if (host && user && db) {
+    rawUrl = `mysql://${encodeURIComponent(user)}:${encodeURIComponent(pwd)}@${host}:${port}/${db}`;
+  } else {
+    throw new Error('DATABASE_URL is not set.');
   }
-  
-  // Transform 'mysql://' to 'mariadb://' if needed for the mariadb driver
-  if (databaseUrl.startsWith('mysql://')) {
-    databaseUrl = databaseUrl.replace('mysql://', 'mariadb://');
-  }
-  pool = mariadb.createPool(databaseUrl);
 }
+
+const url = new URL(rawUrl);
+
+const pool = mariadb.createPool({
+  host: url.hostname,
+  port: url.port ? parseInt(url.port, 10) : 3306,
+  user: url.username || 'root',
+  password: url.password || '',
+  database: url.pathname.replace(/^\//, ''),
+  connectionLimit: 10,
+  connectTimeout: 20000,
+  allowPublicKeyRetrieval: true,
+});
 
 const adapter = new PrismaMariaDb(pool);
 const prisma = new PrismaClient({ adapter });
